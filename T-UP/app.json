@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "t-upApp",
+    "slug": "t-upApp",
+    "version": "2.2.8",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1f2d53"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "notification": { // androidの通知アイコン
+      "icon": "./assets/notificationicon.png",
+    },
+    "ios": {
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-1369937549147272~5189110280" // 広告の設定
+      },
+      "supportsTablet": true,
+      "bundleIdentifier": "com.TUP-CRM",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "2.2.8", //20220513更新
+      "infoPlist": {
+        "CFBundleShortVersionString":"2.2.8",
+        "UIRequiresFullScreen":"YES",
+        "CFBundleDevelopmentRegion":"ja_JP",
+        "NSPhotoLibraryUsageDescription":"写真を送信するためにカメラロールを使用します",
+        "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
+        "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+      }
+    },
+    "android": {
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-1369937549147272~6418447382" // 広告の設定
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.TUP_CRM",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 18, //20220513更新
+      
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_CONTACTS",
+        "READ_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "com.anddoes.launcher.permission.UPDATE_COUNT",
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.providers.gsf.permission.READ_GSERVICES",
+        "com.htc.launcher.permission.READ_SETTINGS",
+        "com.htc.launcher.permission.UPDATE_SHORTCUT",
+        "com.majeur.launcher.permission.UPDATE_BADGE",
+        "com.sec.android.provider.badge.permission.READ",
+        "com.sec.android.provider.badge.permission.WRITE",
+        "com.sonyericsson.home.permission.BROADCAST_BADGE"
+      ],
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+    }
+  }
+}

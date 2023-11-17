@@ -1,0 +1,14 @@
+version: "3"
+services:
+  t-up:
+    container_name: t-up
+    tty: true
+    build: .
+    volumes:
+      - .:/home
+    environment:
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${LOCAL_IP_ADDR}
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"

@@ -1,0 +1,14 @@
+# T-UP/node_modules/
+T-UP/.expo/
+T-UP/dist/
+T-UP/npm-debug.*
+T-UP/*.jks
+T-UP/*.p8
+T-UP/*.p12
+T-UP/*.key
+T-UP/*.mobileprovision
+T-UP/*.orig.*
+T-UP/web-build/
+
+# macOS
+T-UP/.DS_Store
