@@ -23,7 +23,7 @@ function Logo() {
     </View>
   )
 }
-//
+
 export default function App() {
   
   return (
