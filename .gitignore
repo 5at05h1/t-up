@@ -12,3 +12,5 @@ T-UP/web-build/
 
 # macOS
 T-UP/.DS_Store
+
+.vscode/
