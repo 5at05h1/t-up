@@ -1,5 +1,7 @@
 import React, { useState,useEffect } from 'react';
-import { Platform,StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity,TextInput,Linking,LogBox,BackHandler,AppState } from 'react-native';
+import {
+  Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState
+} from 'react-native';
 import { GiftedChat, Actions, Send, InputToolbar, Bubble, Time, Message, Composer } from 'react-native-gifted-chat';
 import Feather from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';

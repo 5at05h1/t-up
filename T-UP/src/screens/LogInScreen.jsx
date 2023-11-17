@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-   View, Text, StyleSheet, TouchableOpacity, Alert,TextInput,Platform ,AppState,Linking,LogBox
+  View, Text, StyleSheet, TouchableOpacity, Alert,TextInput, Platform, AppState, Linking, LogBox
 } from 'react-native';
 import { FloatingLabelInput } from 'react-native-floating-label-input';
 import { Feather } from '@expo/vector-icons';

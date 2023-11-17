@@ -1,6 +1,6 @@
 import React, { useEffect, useState,useCallback } from 'react';
 import {
-   StyleSheet, Text, View, TouchableOpacity, Alert, FlatList, TextInput, Button,ScrollView,RefreshControl,BackHandler ,AppState,Platform, Image
+  StyleSheet, Text, View, TouchableOpacity, Alert, FlatList, TextInput, Button, ScrollView, RefreshControl, BackHandler, AppState, Platform, Image
 } from 'react-native';
 import DropDownPicker,{Item} from 'react-native-dropdown-picker';
 import * as Notifications from 'expo-notifications';

@@ -1,5 +1,7 @@
 import React, { useState,useEffect } from "react";
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, ScrollView, Platform, KeyboardAvoidingView } from "react-native";
+import {
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, ScrollView, Platform, KeyboardAvoidingView
+} from "react-native";
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as Notifications from 'expo-notifications';
 import { Feather } from '@expo/vector-icons';
