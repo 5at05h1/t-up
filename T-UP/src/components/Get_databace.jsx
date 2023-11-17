@@ -4,8 +4,7 @@ import * as SQLite from "expo-sqlite";
 const db = SQLite.openDatabase("db");
 
 export default function GetDB(obj,table){
-    
-        
+  
   return new Promise((resolve, reject)=>{
     db.transaction((tx) => {
       tx.executeSql(

@@ -1,5 +1,6 @@
 import React,{useState, useEffect} from 'react';
-import { StyleSheet,TouchableOpacity, Text, View, TextInput, Switch, Alert,Platform,Button,Image,ScrollView,FlatList,LogBox,KeyboardAvoidingView,Linking
+import {
+  StyleSheet,TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -86,19 +87,19 @@ export function MyModal1(props){
   const [cus_value, setCus_Value] = useState('');
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
-                    return ({
-                      label: item,
-                      value: item,
-                    });
+                  return ({
+                    label: item,
+                    value: item,
+                  });
                 });
                 
   const [open2, setOpen2] = useState(false);
   const [shop_value, setShop_Value] = useState('');
   const items2 = shop_mail.filter(Boolean).map((item,key) => {
-                    return ({
-                      label: key==0?item.replace('@','_s@'):item,
-                      value: item,
-                    });
+                  return ({
+                    label: key==0?item.replace('@','_s@'):item,
+                    value: item,
+                  });
                 });
                 
   useEffect(() => {
@@ -236,7 +237,7 @@ export function MyModal1(props){
       }
     }
 	  
-	  Alert.alert(
+    Alert.alert(
       "通話画面を開きますか？",
       "",
       [
@@ -292,7 +293,7 @@ export function MyModal1(props){
 	  
     var result = await DocumentPicker.getDocumentAsync({});
   	  
-	  if (result) {
+    if (result) {
 	    
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
@@ -301,7 +302,7 @@ export function MyModal1(props){
         setFiledata(result);
       }
       
-	  }
+    }
   };
   
   // 画像選択
@@ -312,7 +313,7 @@ export function MyModal1(props){
       const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
       
       if (status !== 'granted') {
-         Alert.alert(
+        Alert.alert(
           `カメラロールへのアクセスが無効になっています`,
           "設定画面へ移動しますか？",
           [
@@ -333,13 +334,13 @@ export function MyModal1(props){
     }
     
     
-	  let result = await ImagePicker.launchImageLibraryAsync({
-		  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-		  allowsEditing: true,
-		  quality: 1,
-	  });
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 	  
-	  if (result) {
+    if (result) {
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
@@ -348,7 +349,7 @@ export function MyModal1(props){
         setFiledata(result);
       }
       
-	  }
+    }
   };
   
   const onDraft = () => {
@@ -529,14 +530,14 @@ export function MyModal1(props){
     if (a){
       
       axios.get(val.file_path)
-         .then(res => {
+        .then(res => {
             
             setFilename(val.file_path?'添付ファイル':'');
             setFiledata({uri:res.config.url});
-         })
-         .catch((error) => {
-           console.log(error);
-          })
+        })
+        .catch((error) => {
+          console.log(error);
+        })
       
       setNote(val.note);
       setCus_Value(val.receive_mail);
@@ -550,13 +551,13 @@ export function MyModal1(props){
         setCheck(true);
         
         const res_time = new Date(
-            val.time.substr(0,4),
-            val.time.substr(5,2),
-            val.time.substr(8,2),
-            val.time.substr(11,2),
-            val.time.substr(14,2),
-            "00"
-            )
+          val.time.substr(0,4),
+          val.time.substr(5,2),
+          val.time.substr(8,2),
+          val.time.substr(11,2),
+          val.time.substr(14,2),
+          "00"
+        )
         res_time.setMonth(res_time.getMonth() - 1);
         setDate(res_time);
       }else{
@@ -564,54 +565,54 @@ export function MyModal1(props){
       }
       
       setRes_id(val.reservation_id)
-        
+      
       setA(false);
     }
     
     if (res){
       const it = res.filter(Boolean).map((item) => {
-          if(item.draft_flg) {
-            return ({
-              label: '【下書き】'+item.title,
-              value: item,
-            });
-          } else {
-            return ({
-              label: '【予約】'+item.time+"\n"+item.title,
-              value: item,
-            });
-          }
+        if(item.draft_flg) {
+          return ({
+            label: '【下書き】'+item.title,
+            value: item,
+          });
+        } else {
+          return ({
+            label: '【予約】'+item.time+"\n"+item.title,
+            value: item,
+          });
+        }
       });
       
       it.unshift({label:'----------------',value:''});
       
       return(
-            <>
-            <Text style={styles.label}>予約・下書き</Text>
-            <DropDownPicker
-              open={op}
-              value={val}
-              items={it}
-              setOpen={setOp}
-              setValue={setVal}
-              style={styles.inputInner}
-              placeholder = {'----------------'}
-              onClose={() => {setA('a')}}
-              zIndex={5000}
-              translation={{
-                NOTHING_TO_SHOW: "予約・下書きはありません"
-              }}
-            />
-            
-            <TouchableOpacity onPress={onDelete} 
-              style={[val? '':{display: 'none'},styles.delete]}>
-              <Text>削　除</Text>
-            </TouchableOpacity>
-            </>
-            )
+        <>
+          <Text style={styles.label}>予約・下書き</Text>
+          <DropDownPicker
+            open={op}
+            value={val}
+            items={it}
+            setOpen={setOp}
+            setValue={setVal}
+            style={styles.inputInner}
+            placeholder = {'----------------'}
+            onClose={() => {setA('a')}}
+            zIndex={5000}
+            translation={{
+              NOTHING_TO_SHOW: "予約・下書きはありません"
+            }}
+          />
+          
+          <TouchableOpacity onPress={onDelete} 
+            style={[val? '':{display: 'none'},styles.delete]}>
+            <Text>削　除</Text>
+          </TouchableOpacity>
+        </>
+      )
     }
   }
- 
+
   function mail_reservation() {
     
     if (Platform.OS === 'ios') {
@@ -1485,7 +1486,6 @@ export function MyModal3(props){
             })
           }
           
-      
     }, [search])
   
   const onDelete = () => {
@@ -2144,7 +2144,7 @@ export function MyModal4(props){
           <FlatList 
             data={fixed_category}
             renderItem={({ item }) => 
-               (
+              (
                 <Collapse>
                   <CollapseHeader>
                     <View>
@@ -2204,24 +2204,24 @@ export function MyModal5(props){
     
     if (cus) {
       
-      setName(cus.main.name)
+      setName(cus.main.name);
       
       if (cus.reverberation.media == 'SUUMO' && !cus.main.tel1 && !cus.main.tel2 && (cus.main.tel3).substring(0,3) == '050') {
-        setTel(cus.main.tel3)
-        setSuumo(true)
+        setTel(cus.main.tel3);
+        setSuumo(true);
       } else {
-        setTel(cus.main.tel1)
+        setTel(cus.main.tel1);
       }
       
-      setMail(cus.main.mail1)
+      setMail(cus.main.mail1);
       
-      setTitle(cus.beginning_communication.title)
-      setNote(cus.beginning_communication.note)
+      setTitle(cus.beginning_communication.title);
+      setNote(cus.beginning_communication.note);
       
       if (cus.reverberation.media == 'スマイティ' || cus.reverberation.media == 'ホームメイト' || !cus.main.name) {
-        setPattern(2)
+        setPattern(2);
       } else {
-        setPattern(1)
+        setPattern(1);
       }
       
     }
@@ -2406,7 +2406,7 @@ export function MyModal5(props){
         </TouchableOpacity>
         <Text style={styles.templateText}>{tantou}担当者が割り振られていません{"\n"}担当者を選択してください</Text>
         <DropDownPicker
-          style={styles.inputInner,{marginTop:20}}
+          style={[styles.inputInner,{marginTop:20}]}
           containerStyle={{width:'100%'}}
           dropDownContainerStyle={{marginTop:20}}
           open={open}
@@ -2941,7 +2941,7 @@ export function MyModal7(props){
         </View>
         <Text style={[styles.cus_label,{marginTop:5}]}>【グループ店舗】</Text>
         <DropDownPicker
-          style={styles.inputInner,{marginTop:5}}
+          style={[styles.inputInner,{marginTop:5}]}
           containerStyle={{width:'100%'}}
           open={open}
           value={shop_value}
@@ -2995,7 +2995,7 @@ const styles = StyleSheet.create({
     paddingHorizontal:5,
     borderColor: '#1f2d53',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
   },
   textarea: {
@@ -3004,7 +3004,7 @@ const styles = StyleSheet.create({
     paddingHorizontal:5,
     borderColor: '#1f2d53',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     textAlignVertical: 'top'
   },

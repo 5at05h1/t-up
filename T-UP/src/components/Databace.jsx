@@ -8,7 +8,6 @@ export default function CreateDB(props){
   return new Promise((resolve, reject)=>{
   db.transaction((tx) => {
     
-    
     // お客様一覧のスタッフ選択固定のためのDBカラム追加
     tx.executeSql(
       `select * from staff_list where (account = 'all');`,
@@ -35,7 +34,6 @@ export default function CreateDB(props){
       [],
       (_, { rows }) => {
         
-        
         if(rows._array.length == 3) {
           tx.executeSql(
             `alter table "staff_list" add column "check" text;`,
@@ -56,7 +54,6 @@ export default function CreateDB(props){
       `PRAGMA table_info('customer_mst');`,
       [],
       (_, { rows }) => {
-        
         
         if(rows._array.length == 16) {
           tx.executeSql(
@@ -79,7 +76,6 @@ export default function CreateDB(props){
       `PRAGMA table_info('staff_mst');`,
       [],
       (_, { rows }) => {
-        
         
         if(rows._array.length == 17) {
           
@@ -141,39 +137,39 @@ export default function CreateDB(props){
     );
     
     tx.executeSql(
-      `select * from staff_mst;`,  
+      `select * from staff_mst;`,
       [],
       () => {console.log("ローカルDBはすでに作成されています");},
       () => {
-  
+
               // スタッフテーブル追加
               tx.executeSql(
                 `CREATE TABLE "staff_mst" (
-                	"account"	TEXT UNIQUE,
-                	"password"	TEXT,
-                	"shop_id"	TEXT,
-                	"name_1"	TEXT,
-                	"name_2"	TEXT,
-                	"name"	TEXT,
-                	"corporations_name"	TEXT,
-                	"setting_list"	TEXT,
-                	"app_token"	TEXT,
-                	"system_mail"	TEXT,
-                	"yahoomail"	TEXT,
-                	"gmail"	TEXT,
-                	"hotmail"	TEXT,
-                	"outlook"	TEXT,
-                	"softbank"	TEXT,
-                	"icloud"	TEXT,
-                	"original_mail"	TEXT,
-                	"line_id"	TEXT,
-                	"mail_name"	TEXT,
-                	"mail1"	TEXT,
-                	"mail2"	TEXT,
-                	"mail3"	TEXT,
-                	"top_staff_list"	TEXT,
-                	"setting_list7_mail"	TEXT,
-                	PRIMARY KEY("account")
+                  "account"	TEXT UNIQUE,
+                  "password"	TEXT,
+                  "shop_id"	TEXT,
+                  "name_1"	TEXT,
+                  "name_2"	TEXT,
+                  "name"	TEXT,
+                  "corporations_name"	TEXT,
+                  "setting_list"	TEXT,
+                  "app_token"	TEXT,
+                  "system_mail"	TEXT,
+                  "yahoomail"	TEXT,
+                  "gmail"	TEXT,
+                  "hotmail"	TEXT,
+                  "outlook"	TEXT,
+                  "softbank"	TEXT,
+                  "icloud"	TEXT,
+                  "original_mail"	TEXT,
+                  "line_id"	TEXT,
+                  "mail_name"	TEXT,
+                  "mail1"	TEXT,
+                  "mail2"	TEXT,
+                  "mail3"	TEXT,
+                  "top_staff_list"	TEXT,
+                  "setting_list7_mail"	TEXT,
+                  PRIMARY KEY("account")
                 );`,
                 [],
                 () => {console.log("スタッフテーブル追加");},
@@ -183,8 +179,8 @@ export default function CreateDB(props){
               // スタッフインデックス作成
               tx.executeSql(
                 `CREATE INDEX "index_staff_mst" ON "staff_mst" (
-                	"account",
-                	"shop_id"
+                  "account",
+                  "shop_id"
                 );`,
                 [],
                 () => {console.log("スタッフインデックス作成");},
@@ -194,11 +190,11 @@ export default function CreateDB(props){
               // スタッフ一覧テーブル追加
               tx.executeSql(
                 `CREATE TABLE "staff_list" (
-                	"account"	TEXT UNIQUE,
-                	"name_1"	TEXT,
-                	"name_2"	TEXT,
-                	"check"	TEXT,
-                	PRIMARY KEY("account")
+                  "account"	TEXT UNIQUE,
+                  "name_1"	TEXT,
+                  "name_2"	TEXT,
+                  "check"	TEXT,
+                  PRIMARY KEY("account")
                 );`,
                 [],
                 () => {console.log("スタッフ一覧テーブル追加");},
@@ -208,7 +204,7 @@ export default function CreateDB(props){
               // スタッフ一覧インデックス作成
               tx.executeSql(
                 `CREATE INDEX "index_staff_list" ON "staff_list" (
-                	"account"
+                  "account"
                 );`,
                 [],
                 () => {console.log("スタッフ一覧インデックス作成");},
@@ -218,24 +214,24 @@ export default function CreateDB(props){
               // お客様テーブル追加
               tx.executeSql(
                 `CREATE TABLE "customer_mst" (
-                	"customer_id" TEXT UNIQUE,
-                	"name" TEXT,
-                	"kana" TEXT,
-                	"time"	TEXT,
-                	"title"	TEXT,
-                	"note"	TEXT,
-                	"mail1"	TEXT,
-                	"mail2"	TEXT,
-                	"mail3"	TEXT,
-                	"line"	TEXT,
-                	"staff_name"	TEXT,
-                	"media"	TEXT,
-                	"article_url"	TEXT,
-                	"reverberation_user_id"	TEXT,
-                	"coming_user_id"	TEXT,
-                	"coming_day1"	TEXT,
-                	"status"	TEXT,
-                	PRIMARY KEY("customer_id")
+                  "customer_id" TEXT UNIQUE,
+                  "name" TEXT,
+                  "kana" TEXT,
+                  "time"	TEXT,
+                  "title"	TEXT,
+                  "note"	TEXT,
+                  "mail1"	TEXT,
+                  "mail2"	TEXT,
+                  "mail3"	TEXT,
+                  "line"	TEXT,
+                  "staff_name"	TEXT,
+                  "media"	TEXT,
+                  "article_url"	TEXT,
+                  "reverberation_user_id"	TEXT,
+                  "coming_user_id"	TEXT,
+                  "coming_day1"	TEXT,
+                  "status"	TEXT,
+                  PRIMARY KEY("customer_id")
                 );`,
                 [],
                 () => {console.log("お客様テーブル追加");},
@@ -245,7 +241,7 @@ export default function CreateDB(props){
               // お客様インデックス作成
               tx.executeSql(
                 `CREATE INDEX "index_customer_mst" ON "customer_mst" (
-                	"customer_id"
+                  "customer_id"
                 );`,
                 [],
                 () => {console.log("お客様インデックス作成");},
@@ -255,17 +251,17 @@ export default function CreateDB(props){
               // コミュニケーション履歴テーブル追加
               tx.executeSql(
                 `CREATE TABLE "communication_mst" (
-                	"communication_id" TEXT UNIQUE,
-                	"customer_id" TEXT,
-                	"speaker" TEXT,
-                	"time" TEXT,
-                	"title" TEXT,
-                	"note" TEXT,
-                	"line_note" TEXT,
-                	"file_path" TEXT,
-                	"status" TEXT,
-                	"html_flg" TEXT,
-                	PRIMARY KEY("communication_id")
+                  "communication_id" TEXT UNIQUE,
+                  "customer_id" TEXT,
+                  "speaker" TEXT,
+                  "time" TEXT,
+                  "title" TEXT,
+                  "note" TEXT,
+                  "line_note" TEXT,
+                  "file_path" TEXT,
+                  "status" TEXT,
+                  "html_flg" TEXT,
+                  PRIMARY KEY("communication_id")
                 );`,
                 [],
                 () => {console.log("コミュニケーション履歴テーブル追加");},
@@ -275,9 +271,9 @@ export default function CreateDB(props){
               // コミュニケーション履歴インデックス作成
               tx.executeSql(
                 `CREATE INDEX "index_communication_mst" ON "communication_mst" (
-                	"customer_id",
-                	"time",
-                	"status"
+                  "customer_id",
+                  "time",
+                  "status"
                 );`,
                 [],
                 () => {console.log("コミュニケーション履歴インデックス作成");},
@@ -287,11 +283,11 @@ export default function CreateDB(props){
               // 定型文テーブル追加
               tx.executeSql(
                 `CREATE TABLE "fixed_mst" (
-                	"fixed_id"	TEXT,
-                	"category"	TEXT,
-                	"title"	TEXT,
-                	"mail_title"	TEXT,
-                	"note"	TEXT
+                  "fixed_id"	TEXT,
+                  "category"	TEXT,
+                  "title"	TEXT,
+                  "mail_title"	TEXT,
+                  "note"	TEXT
                 );`,
                 [],
                 () => {console.log("定型文テーブル追加");},
@@ -300,7 +296,7 @@ export default function CreateDB(props){
               // 定型文インデックス作成
               tx.executeSql(
                 `CREATE INDEX "index_fixed_mst" ON "fixed_mst" (
-                	"category"
+                  "category"
                 );`,
                 [],
                 () => {console.log("定型文インデックス作成");},
@@ -310,8 +306,8 @@ export default function CreateDB(props){
               // 駅・エリアテーブル追加
               tx.executeSql(
                 `CREATE TABLE "station_mst" (
-                	"id"	TEXT,
-                	"name"	TEXT
+                  "id"	TEXT,
+                  "name"	TEXT
                 );`,
                 [],
                 () => {console.log("駅・エリアテーブル追加");},
@@ -321,8 +317,8 @@ export default function CreateDB(props){
               // 住所テーブル追加
               tx.executeSql(
                 `CREATE TABLE "address_mst" (
-                	"id"	TEXT,
-                	"name"	TEXT
+                  "id"	TEXT,
+                  "name"	TEXT
                 );`,
                 [],
                 () => {console.log("住所テーブル追加");},
@@ -387,7 +383,7 @@ export default function CreateDB(props){
     //   },
     //   () => {
     //     console.log("失敗");
-        
+    
     //   }
     // );
     
