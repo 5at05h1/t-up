@@ -43,11 +43,12 @@ export function MyModal0(props){
     >
       <View  style={styles.line}>
         <TouchableOpacity
-          style={{position: 'absolute',
-                  top:8,
-                  right:10,
-                  zIndex:999
-                }}
+          style={{
+            position: 'absolute',
+            top:8,
+            right:10,
+            zIndex:999
+          }}
           onPress={onPress}
         >
           <Feather name='x-circle' color='gray' size={35} />
@@ -393,13 +394,13 @@ export function MyModal1(props){
     setCon_flg(true);
     
     const formatDate = (current_datetime)=>{
-        let formatted_date = 
-          current_datetime.getFullYear() + "-" + 
-          (current_datetime.getMonth() + 1) + "-" + 
-          current_datetime.getDate() + " " + 
-          current_datetime.getHours() + ":" + 
-          current_datetime.getMinutes() + ":" + "0";
-        return formatted_date;
+      let formatted_date = 
+        current_datetime.getFullYear() + "-" + 
+        (current_datetime.getMonth() + 1) + "-" + 
+        current_datetime.getDate() + " " + 
+        current_datetime.getHours() + ":" + 
+        current_datetime.getMinutes() + ":" + "0";
+      return formatted_date;
     }
     
     // 本文入力チェック
@@ -412,7 +413,6 @@ export function MyModal1(props){
             {
               text: "はい",
               onPress: () => {
-                
                 props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
                 props.setModal1(false)
                 setNote('');
@@ -432,7 +432,6 @@ export function MyModal1(props){
           ]
         );
       } else {
-        
         props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
         props.setModal1(false)
         setNote('');
@@ -525,7 +524,6 @@ export function MyModal1(props){
   const [val, setVal] = useState(false);
   
   function rrr(){
-    
     
     if (a){
       
@@ -843,7 +841,6 @@ export function MyModal2(props){
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
-    
     setDate(currentDate);
   };
 
@@ -953,33 +950,33 @@ export function MyModal2(props){
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
         <View style={styles.form}>
-            <View style={styles.input}>{action_date()}</View>
-            <DropDownPicker
-              open={open}
-              value={status}
-              items={items1}
-              setOpen={setOpen}
-              setValue={setStatus}
-              setItems={setItems1}
-              style={styles.inputInner}
-              placeholder = "選択してください"
-              zIndex={1000}
-              maxHeight={300}
+          <View style={styles.input}>{action_date()}</View>
+          <DropDownPicker
+            open={open}
+            value={status}
+            items={items1}
+            setOpen={setOpen}
+            setValue={setStatus}
+            setItems={setItems1}
+            style={styles.inputInner}
+            placeholder = "選択してください"
+            zIndex={1000}
+            maxHeight={300}
+          />
+          <View style={styles.input}>
+            <Text style={styles.label}>内容詳細</Text>
+            <TextInput
+              onChangeText={(text) => {setAction_text(text)}}
+              value={action_text}
+              style={styles.textarea}
+              multiline={true}
+              disableFullscreenUI={true}
+              numberOfLines={11}
             />
-            <View style={styles.input}>
-              <Text style={styles.label}>内容詳細</Text>
-              <TextInput
-                onChangeText={(text) => {setAction_text(text)}}
-                value={action_text}
-                style={styles.textarea}
-                multiline={true}
-                disableFullscreenUI={true}
-                numberOfLines={11}
-              />
-            </View>
-            <TouchableOpacity onPress={onSubmit} style={styles.submit}>
-              <Text style={styles.submitText}>登　録</Text>
-            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={onSubmit} style={styles.submit}>
+            <Text style={styles.submitText}>登　録</Text>
+          </TouchableOpacity>
         </View>
       </View>
       </KeyboardAvoidingView>
@@ -2506,7 +2503,7 @@ export function MyModal6(props){
           if(id_list){
             id_list += ","+cus.customer_id;
           } else {
-            id_list = cus.customer_id;	
+            id_list = cus.customer_id;
           }
           
           // customer_id古いもの取得処理
@@ -2811,7 +2808,6 @@ export function MyModal7(props){
     setClose(isVisible);
     
     if (overlap && overlap.group) {
-      
       
       setName(overlap.main.name);    // お客様名
       setTitle(overlap.main.title);    // 件名

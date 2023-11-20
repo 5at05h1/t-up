@@ -8,7 +8,7 @@ import Toast from 'react-native-root-toast';
 import VersionCheck from 'react-native-version-check-expo'
 
 LogBox.ignoreLogs([
-"exported from 'deprecated-react-native-prop-types'.",
+  "exported from 'deprecated-react-native-prop-types'.",
 ])
 
 // oishi 端末token取得用追加
@@ -184,7 +184,6 @@ export default function LogInScreen(props) {
       Toast.hide(toast);
       await GetDB(rocalDB,'staff_mst');
       
-      
     }
     execute();
     
@@ -282,7 +281,7 @@ export default function LogInScreen(props) {
             staff.top_staff_list,
             staff.setting_list7_mail,
           ];
-            
+          
           Insert_staff_db(staff.account,staff.password,staff_data);
           
           navigation.reset({
@@ -302,7 +301,6 @@ export default function LogInScreen(props) {
         })
     }
     
-      
   }, [station,address]);
   
   function Insert_staff_db(account,pass,data){
@@ -333,7 +331,7 @@ export default function LogInScreen(props) {
   
   // テーブルを空にする
   function delete_db(){
-      
+    
     new Promise((resolve, reject)=>{
       db.transaction((tx) => {
         // スタッフ
@@ -374,7 +372,7 @@ export default function LogInScreen(props) {
         
         // テーブルの中身を空にする
         delete_db();
-          
+        
         // スタッフ情報をサーバーから取得
         const staff_data = [
           staff.account,
@@ -402,7 +400,7 @@ export default function LogInScreen(props) {
           staff.top_staff_list,
           staff.setting_list7_mail,
         ];
-          
+        
         Insert_staff_db(staff.account,staff.password,staff_data);
 
       })
@@ -445,7 +443,7 @@ export default function LogInScreen(props) {
                   );
                 });
               })
-                
+              
             }
             
             if (rows._array.length) {
@@ -563,7 +561,7 @@ export default function LogInScreen(props) {
           staff.top_staff_list,
           staff.setting_list7_mail,
         ];
-          
+        
         Insert_staff_db(staff.account,staff.password,staff_data);
         
         navigation.reset({
@@ -629,8 +627,7 @@ async function registerForPushNotificationsAsync() {
       })
     }
 
-  }
-  else {
+  } else {
     alert('この端末では、プッシュ通知が機能しません。');
   }
 
@@ -683,7 +680,7 @@ async function registerForPushNotificationsAsync() {
         <TouchableOpacity
           style={styles.buttonContainer}
           onPress={onSubmit}
-          >
+        >
           <Text style={styles.buttonLabel}>ログイン</Text>
         </TouchableOpacity>
       </View>

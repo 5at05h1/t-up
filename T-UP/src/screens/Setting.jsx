@@ -229,36 +229,36 @@ export default function Setting(props) {
     
     navigation.setOptions({
       headerLeft: () => (
-          <Feather
-            name='chevron-left'
-            color='white'
-            size={30}
-            onPress={() => {
-              if (!isLoading) {
-                navigation.reset({
-                  index: 0,
-                  routes: [{
-                    name: 'CommunicationHistory',
-                    params: route.params,
-                    websocket:route.websocket,
-                    station:route.station,
-                    address:route.address,
-                    previous:'Setting'
-                  }],
-                });
-              }
-            }}
-            style={{paddingHorizontal:20,paddingVertical:20}}
-          />
+        <Feather
+          name='chevron-left'
+          color='white'
+          size={30}
+          onPress={() => {
+            if (!isLoading) {
+              navigation.reset({
+                index: 0,
+                routes: [{
+                  name: 'CommunicationHistory',
+                  params: route.params,
+                  websocket:route.websocket,
+                  station:route.station,
+                  address:route.address,
+                  previous:'Setting'
+                }],
+              });
+            }
+          }}
+          style={{paddingHorizontal:20,paddingVertical:20}}
+        />
       ),
       headerRight: () => (
-          <Feather
-            name='log-out'
-            color='white'
-            size={30}
-            onPress={() => logout()}
-            style={{paddingHorizontal:20,paddingVertical:20}}
-          />
+        <Feather
+          name='log-out'
+          color='white'
+          size={30}
+          onPress={() => logout()}
+          style={{paddingHorizontal:20,paddingVertical:20}}
+        />
       ),
     });
 
@@ -271,13 +271,13 @@ export default function Setting(props) {
   }, []);
   
 function Delete_staff_db(){
-    
+  
   new Promise((resolve, reject)=>{
     db.transaction((tx) => {
     
       // スタッフ
       tx.executeSql(
-        `delete from staff_mst;`,  
+        `delete from staff_mst;`,
         [],
         () => {console.log("delete staff_mst OK");},
         () => {console.log("delete staff_mst 失敗");}
@@ -704,11 +704,12 @@ function Delete_staff_db(){
           >
             <KeyboardAvoidingView  style={styles.password_modal} behavior={Platform.OS === "ios" ? "padding" : "height"}>
               <TouchableOpacity
-                style={{position: 'absolute',
-                        top:8,
-                        right:10,
-                        zIndex:999
-                      }}
+                style={{
+                  position: 'absolute',
+                  top:8,
+                  right:10,
+                  zIndex:999
+                }}
                 onPress={() => {passwordClose()}}
               >
                 <Feather name='x-circle' color='gray' size={35} />
@@ -1037,7 +1038,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#1f2d53',
     fontSize:16,
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
     color:'#000000'
   },
@@ -1092,13 +1093,13 @@ const styles = StyleSheet.create({
     width:160,
     backgroundColor: '#fff',
     borderColor: '#191970',
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderRadius: 8,
   },
   dropDownContainer: {
     width:160,
     borderColor: '#191970',
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     zIndex:998,
   },
   dropDownlabel: {

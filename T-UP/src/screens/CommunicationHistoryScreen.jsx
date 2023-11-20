@@ -5,7 +5,7 @@ import {
 import DropDownPicker,{Item} from 'react-native-dropdown-picker';
 import * as Notifications from 'expo-notifications';
 import { Feather } from '@expo/vector-icons';
-import { AdMobBanner } from 'expo-ads-admob';
+// import { AdMobBanner } from 'expo-ads-admob';
 
 import Loading from '../components/Loading';
 import GetDB from '../components/Get_databace';
@@ -21,7 +21,6 @@ let domain = 'https://www.t-up.systems/';
 Notifications.setBadgeCountAsync(0);
 
 export default function CommunicationHistoryScreen(props) {
-  
   
   if (AppState.currentState === 'active') {
     Notifications.setBadgeCountAsync(0);
@@ -251,7 +250,7 @@ export default function CommunicationHistoryScreen(props) {
                   cus_name:cus_data.name,
                 }],
               });
-                
+              
             },
             () => {
               console.log("通知をタップ失敗");
@@ -1242,7 +1241,7 @@ export default function CommunicationHistoryScreen(props) {
                     </Text>
                   </View>
                 </TouchableOpacity>
-                {index==4?(
+                {/* {index==4?(
                   <AdMobBanner
                     adUnitID={
                       Platform.select({
@@ -1252,7 +1251,7 @@ export default function CommunicationHistoryScreen(props) {
                     }
                     onDidFailToReceiveAdWithError={bannerError} 
                   />
-                ):(<></>)}
+                ):(<></>)} */}
               </>
               )
             }

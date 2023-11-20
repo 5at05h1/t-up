@@ -118,55 +118,55 @@ export default function TalkScreen(props) {
       headerTitle:() => (<Text style={styles.name}>{route.cus_name}</Text>),
       headerTitleAlign: 'left',
       headerLeft: () => (
-          <Feather
-            name='chevron-left'
-            color='white'
-            size={30}
-            onPress={() => {
-              if (!isLoading) {
-                if(msgtext) {
-                  Alert.alert(
-                    "入力されたテキストは消えますが\nよろしいですか？",
-                    "",
-                    [
-                      {
-                        text: "はい",
-                        onPress: () => {
-                          navigation.reset({
-                            index: 0,
-                            routes: [{
-                              name: 'CommunicationHistory' ,
-                              params: route.params,
-                              websocket:route.websocket,
-                              station:route.station,
-                              address:route.address,
-                              previous:'TalkScreen'
-                            }],
-                          });
-                        }
-                      },
-                      {
-                        text: "いいえ",
-                      },
-                    ]
-                  );
-                } else {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{
-                      name: 'CommunicationHistory' ,
-                      params: route.params,
-                      websocket:route.websocket,
-                      station:route.station,
-                      address:route.address,
-                      previous:'TalkScreen'
-                    }],
-                  });
-                }
+        <Feather
+          name='chevron-left'
+          color='white'
+          size={30}
+          onPress={() => {
+            if (!isLoading) {
+              if(msgtext) {
+                Alert.alert(
+                  "入力されたテキストは消えますが\nよろしいですか？",
+                  "",
+                  [
+                    {
+                      text: "はい",
+                      onPress: () => {
+                        navigation.reset({
+                          index: 0,
+                          routes: [{
+                            name: 'CommunicationHistory' ,
+                            params: route.params,
+                            websocket:route.websocket,
+                            station:route.station,
+                            address:route.address,
+                            previous:'TalkScreen'
+                          }],
+                        });
+                      }
+                    },
+                    {
+                      text: "いいえ",
+                    },
+                  ]
+                );
+              } else {
+                navigation.reset({
+                  index: 0,
+                  routes: [{
+                    name: 'CommunicationHistory' ,
+                    params: route.params,
+                    websocket:route.websocket,
+                    station:route.station,
+                    address:route.address,
+                    previous:'TalkScreen'
+                  }],
+                });
               }
-            }}
-            style={{paddingHorizontal:20,paddingVertical:20}}
-          />
+            }
+          }}
+          style={{paddingHorizontal:20,paddingVertical:20}}
+        />
       ),
     });
 
@@ -320,16 +320,16 @@ export default function TalkScreen(props) {
       console.log('closed');
       const WS_URL = 'ws://52.194.19.123:8080/ws/'+route.params.shop_id+'/'
       navigation.reset({
-                      index: 0,
-                      routes: [{
-                        name: 'TalkScreen' ,
-                        params: route.params ,
-                        customer:route.customer,
-                        websocket:new WebSocket(WS_URL),
-                        station:route.station,
-                        address:route.address,
-                      }],
-                    });
+        index: 0,
+        routes: [{
+          name: 'TalkScreen' ,
+          params: route.params ,
+          customer:route.customer,
+          websocket:new WebSocket(WS_URL),
+          station:route.station,
+          address:route.address,
+        }],
+      });
     }
     
   }
@@ -452,28 +452,28 @@ export default function TalkScreen(props) {
         {...props}
         position={message_sender_id == 2 ? 'left' : 'right'}
         textStyle={{
-            right: {
-              fontSize: 12,
-            },
-            left: {
-              fontSize: 12
-            },
+          right: {
+            fontSize: 12,
+          },
+          left: {
+            fontSize: 12
+          },
         }}
         wrapperStyle={{
             right: {
-                backgroundColor: 'white',
-                borderWidth: 2,
-                borderColor: '#1f2d53',
-                marginRight: 5,
-                marginVertical: 5,
-                maxWidth: '75%',
+              backgroundColor: 'white',
+              borderWidth: 2,
+              borderColor: '#1f2d53',
+              marginRight: 5,
+              marginVertical: 5,
+              maxWidth: '75%',
             },
             left: {
-                backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#1f2d53'),
-                marginLeft: 5,
-                marginVertical: 5,
-                borderBottomLeftRadius: 1,
-                maxWidth: '75%',
+              backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#1f2d53'),
+              marginLeft: 5,
+              marginVertical: 5,
+              borderBottomLeftRadius: 1,
+              maxWidth: '75%',
             },
         }}
       />
@@ -518,7 +518,6 @@ export default function TalkScreen(props) {
           if (rows._array.length) {
             
             db.transaction((tx) => {
-              
               
               communication.map((c) => {
                 
@@ -570,7 +569,7 @@ export default function TalkScreen(props) {
                   }
                 );
               }
-                      
+              
               communication.map((c) => {
                 add_communication_list.map((add) => {
                   
@@ -799,7 +798,7 @@ export default function TalkScreen(props) {
       const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
       
       if (status !== 'granted') {
-         Alert.alert(
+        Alert.alert(
           `カメラロールへのアクセスが無効になっています`,
           "設定画面へ移動しますか？",
           [
@@ -825,13 +824,13 @@ export default function TalkScreen(props) {
       
       setLoading(true);
       
-  	  let result = await ImagePicker.launchImageLibraryAsync({
-  		  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  		  allowsEditing: true,
-  		  quality: 1,
-  	  });
-  	  
-  	  if (!result.cancelled) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+      
+      if (!result.cancelled) {
         
         let filename = result.uri.split('/').pop();
   
@@ -883,9 +882,9 @@ export default function TalkScreen(props) {
           Alert.alert(errorMsg);
         })
         
-  	  }
-  	  
-	  }
+      }
+      
+    }
     setModal0(false)
 	};
 	
@@ -895,9 +894,9 @@ export default function TalkScreen(props) {
     if(!customer.line){
       Alert.alert('LINE未連携です');
     } else {
-  	  
+      
       setLoading(true);
-  	  if (result) {
+      if (result) {
         
         let filename = result.uri.split('/').pop();
   
@@ -951,9 +950,9 @@ export default function TalkScreen(props) {
           Alert.alert(errorMsg);
         })
         
-  	  }
-  	  
-	  }
+      }
+      
+    }
     setModal0(false)
   };
 	
@@ -978,7 +977,7 @@ export default function TalkScreen(props) {
       }
     }
 	  
-	  Alert.alert(
+    Alert.alert(
       "通話画面を開きますか？",
       "",
       [
@@ -1058,7 +1057,6 @@ export default function TalkScreen(props) {
       setMenu_height(0)
     }
   }
-  
   
   
   return (
@@ -1164,7 +1162,7 @@ export default function TalkScreen(props) {
           })
           :null,
       ]}
-          
+      
       onLayout={(e) => getHeight(e)}
       maxComposerHeight={150}
       
@@ -1218,20 +1216,20 @@ export default function TalkScreen(props) {
               setModal1={setModal1}
               reservation={reservation}
               shop_mail={[
-                          staff.system_mail,
-                          staff.yahoomail,
-                          staff.gmail,
-                          staff.hotmail,
-                          staff.outlook,
-                          staff.softbank,
-                          staff.icloud,
-                          staff.original_mail
-                        ]}
-              cus_mail={customer.main?[
-                          customer.main.mail1,
-                          customer.main.mail2,
-                          customer.main.mail3
-                        ]:[]}
+                staff.system_mail,
+                staff.yahoomail,
+                staff.gmail,
+                staff.hotmail,
+                staff.outlook,
+                staff.softbank,
+                staff.icloud,
+                staff.original_mail
+              ]}
+              cus_mail={customer.main ? [
+                customer.main.mail1,
+                customer.main.mail2,
+                customer.main.mail3
+              ]:[]}
               setMail={setMail}
               subject={subject}
               route={route}
@@ -1241,30 +1239,30 @@ export default function TalkScreen(props) {
               address={route.address}
               c_d={conditions_date}
               fixed={route.fixed}
-              hensu={customer.main?[
-                      customer.main.name,
-                      staff.corporations_name,
-                      staff.name,
-                      customer.reverberation.staff_name,
-                      route.params.name_1+' '+route.params.name_2,
-                      customer.reverberation.media,
-                      inquiry_text,
-                      customer.reverberation.article_url,
-                      chatbot
-                    ]:[]}
+              hensu={customer.main ? [
+                customer.main.name,
+                staff.corporations_name,
+                staff.name,
+                customer.reverberation.staff_name,
+                route.params.name_1+' '+route.params.name_2,
+                customer.reverberation.media,
+                inquiry_text,
+                customer.reverberation.article_url,
+                chatbot
+              ]:[]}
               mail_select={staff.mail_select}
               options={options}
             />
             <MyModal2
               isVisible={modal2}
               setModal2={setModal2}
-              onClose={()=>{ 
-                        if(add[1]){
-                          setModal2(false);
-                        } else {
-                          Alert.alert('確定を押してください');
-                        }
-                      }}
+              onClose={() => {
+                if(add[1]){
+                  setModal2(false);
+                } else {
+                  Alert.alert('確定を押してください');
+                }
+              }}
               setAdd={setAdd}
               onSend={onSend}
             />
@@ -1300,17 +1298,17 @@ export default function TalkScreen(props) {
               subject={subject}
               setMsgtext={setMsgtext}
               setSubject={setSubject}
-              hensu={customer.main?[
-                      customer.main.name,
-                      staff.corporations_name,
-                      staff.name,
-                      customer.reverberation.staff_name,
-                      route.params.name_1+' '+route.params.name_2,
-                      customer.reverberation.media,
-                      inquiry_text,
-                      customer.reverberation.article_url,
-                      chatbot
-                    ]:[]}
+              hensu={customer.main ? [
+                customer.main.name,
+                staff.corporations_name,
+                staff.name,
+                customer.reverberation.staff_name,
+                route.params.name_1+' '+route.params.name_2,
+                customer.reverberation.media,
+                inquiry_text,
+                customer.reverberation.article_url,
+                chatbot
+              ]:[]}
             />
           </View>
         </View>
