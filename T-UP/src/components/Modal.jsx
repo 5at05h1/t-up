@@ -1,6 +1,6 @@
 import React,{useState, useEffect} from 'react';
 import {
-  StyleSheet,TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
 import Feather from 'react-native-vector-icons/Feather';
-import {Collapse,CollapseHeader, CollapseBody} from 'accordion-collapse-react-native';
+import {Collapse, CollapseHeader, CollapseBody} from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
 import MaterialChip from "react-native-material-chip"
 import Autocomplete from 'react-native-autocomplete-input';
@@ -23,7 +23,8 @@ const db = SQLite.openDatabase("db");
 
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
-LogBox.ignoreAllLogs()
+LogBox.ignoreAllLogs();
+
 export function MyModal0(props){
   
   const { isVisible,onSwipeComplete,onPress,send_image,pickDocument } = props;
@@ -88,21 +89,21 @@ export function MyModal1(props){
   const [cus_value, setCus_Value] = useState('');
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
-                  return ({
-                    label: item,
-                    value: item,
-                  });
-                });
-                
+    return ({
+      label: item,
+      value: item,
+    });
+  });
+  
   const [open2, setOpen2] = useState(false);
   const [shop_value, setShop_Value] = useState('');
   const items2 = shop_mail.filter(Boolean).map((item,key) => {
-                  return ({
-                    label: key==0?item.replace('@','_s@'):item,
-                    value: item,
-                  });
-                });
-                
+    return ({
+      label: key==0?item.replace('@','_s@'):item,
+      value: item,
+    });
+  });
+  
   useEffect(() => {
     
     // 宛先
@@ -361,13 +362,13 @@ export function MyModal1(props){
     }
     
     const formatDate = (current_datetime)=>{
-        let formatted_date = 
-          current_datetime.getFullYear() + "-" + 
-          (current_datetime.getMonth() + 1) + "-" + 
-          current_datetime.getDate() + " " + 
-          current_datetime.getHours() + ":" + 
-          current_datetime.getMinutes() + ":" + "0";
-        return formatted_date;
+      let formatted_date = 
+        current_datetime.getFullYear() + "-" + 
+        (current_datetime.getMonth() + 1) + "-" + 
+        current_datetime.getDate() + " " + 
+        current_datetime.getHours() + ":" + 
+        current_datetime.getMinutes() + ":" + "0";
+      return formatted_date;
     }
     
     setCon_flg(true);
@@ -1711,7 +1712,7 @@ export function MyModal3(props){
                             setFilteredAddress([]);
                           }}>
                           <Text style={styles.suggestText}>
-                              {item.name}
+                            {item.name}
                           </Text>
                         </TouchableOpacity>,
                       }}
@@ -2123,7 +2124,7 @@ export function MyModal4(props){
       animationOutTiming={500}
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
-      propagateSwipe={true} 
+      propagateSwipe={true}
     >
       <View  style={[{height:300},styles.template]}>
         <TouchableOpacity
@@ -2171,12 +2172,12 @@ export function MyModal5(props){
   const [staff_value, setStaff_Value] = useState(null);
   const [staffs, setStaffs] = useState([]);
   const items = staffs.map((item) => {
-                  return ({
-                    label: item.name_1+'　'+(item.name_2?item.name_2:''),
-                    value: item.account,
-                    key: item.account
-                  });
-                });
+    return ({
+      label: item.name_1+'　'+(item.name_2?item.name_2:''),
+      value: item.account,
+      key: item.account
+    });
+  });
   
   const [name,setName] = useState('');
   const [tel,setTel] = useState('');
@@ -2522,7 +2523,7 @@ export function MyModal6(props){
         const items = s.map((item) => {
           
           if (route.params.account == item[0]) {
-            setUser_id(item[0])
+            setUser_id(item[0]);
           }
           
           return ({
@@ -2531,7 +2532,7 @@ export function MyModal6(props){
           });
         });
         
-        setStaffs(items)
+        setStaffs(items);
       }
       
     }

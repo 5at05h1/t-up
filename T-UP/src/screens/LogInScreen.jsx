@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert,TextInput, Platform, AppState, Linking, LogBox
+  View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, Platform, AppState, Linking, LogBox
 } from 'react-native';
 import { FloatingLabelInput } from 'react-native-floating-label-input';
 import { Feather } from '@expo/vector-icons';
 import Toast from 'react-native-root-toast';
-import VersionCheck from 'react-native-version-check-expo'
+import VersionCheck from 'react-native-version-check-expo';
 
 LogBox.ignoreLogs([
   "exported from 'deprecated-react-native-prop-types'.",
@@ -407,7 +407,7 @@ export default function LogInScreen(props) {
       .catch((error) => {
         const errorMsg = "[※]自動ログインに失敗しました。";
         Alert.alert(errorMsg);
-        console.log(error)
+        console.log(error);
       })
     
   }
@@ -531,7 +531,7 @@ export default function LogInScreen(props) {
         registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
         
         // websocket通信
-        const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/'
+        const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/';
         
         const staff = json.staff;
         
@@ -581,7 +581,7 @@ export default function LogInScreen(props) {
       .catch((error) => {
         const errorMsg = "IDまたはパスワードが違います";
         Alert.alert(errorMsg);
-        console.log(error)
+        console.log(error);
       })
   };
 

@@ -546,13 +546,13 @@ export default function TalkScreen(props) {
               
               // 追加
               const local_communication_list = rocal.map((r) => {
-                            return (r.communication_id);
-                          });
-                          
+                return (r.communication_id);
+              });
+              
               const server_communication_list = communication.map((c) => {
-                            return (c.communication_id);
-                          });
-                          
+                return (c.communication_id);
+              });
+              
               const add_communication_list = server_communication_list.filter(c => local_communication_list.indexOf(c) == -1)
               
               // 最大20件に制御するため古いものを削除する
@@ -623,17 +623,17 @@ export default function TalkScreen(props) {
     
     let newMessage = [];
     newMessage[0] = {
-                      _id: '',
-                      text: '',
-                      image: '',
-                      createdAt: '',
-                      user: {
-                        _id: 1,
-                        name: '店舗',
-                        status: '',
-                        title: '',
-                      }
-                    }
+      _id: '',
+      text: '',
+      image: '',
+      createdAt: '',
+      user: {
+        _id: 1,
+        name: '店舗',
+        status: '',
+        title: '',
+      }
+    }
     
     newMessage[0]._id = String(Number(messages[0]._id)+1);
     
@@ -1033,17 +1033,13 @@ export default function TalkScreen(props) {
         setModal0(true);
       }
       
-    }
-    else if (name === 2) {
+    } else if (name === 2) {
       setModal1(true);
-    }
-    else if (name === 3) {
+    } else if (name === 3) {
       setModal2(true);
-    }
-    else if (name === 4) {
+    } else if (name === 4) {
       setModal3(true);
-    }
-    else if (name === 5) {
+    } else if (name === 5) {
       setModal4(true);
     }
   }
@@ -1169,16 +1165,16 @@ export default function TalkScreen(props) {
       // 入力欄の下のスペース
       bottomOffset={Platform.select({ios: 35})} // 入力欄下の謎のすき間埋める(iosのみ)
       renderInputToolbar={(props) => (
-          <InputToolbar {...props} 
+        <InputToolbar 
+          {...props}
           editable={false}
-            containerStyle={[{
-              backgroundColor:'#d9d9d9'},
-              menu?{height:255}:'',
-              menu&&menu_height?{height:255+menu_height}:'',
-            ]}
-          />
-        )
-      }
+          containerStyle={[{
+            backgroundColor:'#d9d9d9'},
+            menu?{height:255}:'',
+            menu&&menu_height?{height:255+menu_height}:'',
+          ]}
+        />
+      )}
       // ↑の中身
       renderAccessory={(props) => 
         <View

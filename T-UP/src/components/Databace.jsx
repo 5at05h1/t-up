@@ -142,191 +142,191 @@ export default function CreateDB(props){
       () => {console.log("ローカルDBはすでに作成されています");},
       () => {
 
-              // スタッフテーブル追加
-              tx.executeSql(
-                `CREATE TABLE "staff_mst" (
-                  "account"	TEXT UNIQUE,
-                  "password"	TEXT,
-                  "shop_id"	TEXT,
-                  "name_1"	TEXT,
-                  "name_2"	TEXT,
-                  "name"	TEXT,
-                  "corporations_name"	TEXT,
-                  "setting_list"	TEXT,
-                  "app_token"	TEXT,
-                  "system_mail"	TEXT,
-                  "yahoomail"	TEXT,
-                  "gmail"	TEXT,
-                  "hotmail"	TEXT,
-                  "outlook"	TEXT,
-                  "softbank"	TEXT,
-                  "icloud"	TEXT,
-                  "original_mail"	TEXT,
-                  "line_id"	TEXT,
-                  "mail_name"	TEXT,
-                  "mail1"	TEXT,
-                  "mail2"	TEXT,
-                  "mail3"	TEXT,
-                  "top_staff_list"	TEXT,
-                  "setting_list7_mail"	TEXT,
-                  PRIMARY KEY("account")
-                );`,
-                [],
-                () => {console.log("スタッフテーブル追加");},
-                () => {console.log("スタッフテーブル追加失敗");}
-              );
-              
-              // スタッフインデックス作成
-              tx.executeSql(
-                `CREATE INDEX "index_staff_mst" ON "staff_mst" (
-                  "account",
-                  "shop_id"
-                );`,
-                [],
-                () => {console.log("スタッフインデックス作成");},
-                () => {console.log("スタッフインデックス作成失敗");}
-              );
-              
-              // スタッフ一覧テーブル追加
-              tx.executeSql(
-                `CREATE TABLE "staff_list" (
-                  "account"	TEXT UNIQUE,
-                  "name_1"	TEXT,
-                  "name_2"	TEXT,
-                  "check"	TEXT,
-                  PRIMARY KEY("account")
-                );`,
-                [],
-                () => {console.log("スタッフ一覧テーブル追加");},
-                () => {console.log("スタッフ一覧テーブル追加失敗");}
-              );
-              
-              // スタッフ一覧インデックス作成
-              tx.executeSql(
-                `CREATE INDEX "index_staff_list" ON "staff_list" (
-                  "account"
-                );`,
-                [],
-                () => {console.log("スタッフ一覧インデックス作成");},
-                () => {console.log("スタッフ一覧インデックス作成失敗");}
-              );
-              
-              // お客様テーブル追加
-              tx.executeSql(
-                `CREATE TABLE "customer_mst" (
-                  "customer_id" TEXT UNIQUE,
-                  "name" TEXT,
-                  "kana" TEXT,
-                  "time"	TEXT,
-                  "title"	TEXT,
-                  "note"	TEXT,
-                  "mail1"	TEXT,
-                  "mail2"	TEXT,
-                  "mail3"	TEXT,
-                  "line"	TEXT,
-                  "staff_name"	TEXT,
-                  "media"	TEXT,
-                  "article_url"	TEXT,
-                  "reverberation_user_id"	TEXT,
-                  "coming_user_id"	TEXT,
-                  "coming_day1"	TEXT,
-                  "status"	TEXT,
-                  PRIMARY KEY("customer_id")
-                );`,
-                [],
-                () => {console.log("お客様テーブル追加");},
-                () => {console.log("お客様テーブル追加失敗");}
-              );
-              
-              // お客様インデックス作成
-              tx.executeSql(
-                `CREATE INDEX "index_customer_mst" ON "customer_mst" (
-                  "customer_id"
-                );`,
-                [],
-                () => {console.log("お客様インデックス作成");},
-                () => {console.log("お客様インデックス作成失敗");}
-              );
-              
-              // コミュニケーション履歴テーブル追加
-              tx.executeSql(
-                `CREATE TABLE "communication_mst" (
-                  "communication_id" TEXT UNIQUE,
-                  "customer_id" TEXT,
-                  "speaker" TEXT,
-                  "time" TEXT,
-                  "title" TEXT,
-                  "note" TEXT,
-                  "line_note" TEXT,
-                  "file_path" TEXT,
-                  "status" TEXT,
-                  "html_flg" TEXT,
-                  PRIMARY KEY("communication_id")
-                );`,
-                [],
-                () => {console.log("コミュニケーション履歴テーブル追加");},
-                () => {console.log("コミュニケーション履歴テーブル追加失敗");}
-              );
-              
-              // コミュニケーション履歴インデックス作成
-              tx.executeSql(
-                `CREATE INDEX "index_communication_mst" ON "communication_mst" (
-                  "customer_id",
-                  "time",
-                  "status"
-                );`,
-                [],
-                () => {console.log("コミュニケーション履歴インデックス作成");},
-                () => {console.log("コミュニケーション履歴インデックス作成失敗");}
-              );
-              
-              // 定型文テーブル追加
-              tx.executeSql(
-                `CREATE TABLE "fixed_mst" (
-                  "fixed_id"	TEXT,
-                  "category"	TEXT,
-                  "title"	TEXT,
-                  "mail_title"	TEXT,
-                  "note"	TEXT
-                );`,
-                [],
-                () => {console.log("定型文テーブル追加");},
-                () => {console.log("定型文テーブル追加失敗");}
-              );
-              // 定型文インデックス作成
-              tx.executeSql(
-                `CREATE INDEX "index_fixed_mst" ON "fixed_mst" (
-                  "category"
-                );`,
-                [],
-                () => {console.log("定型文インデックス作成");},
-                () => {console.log("定型文インデックス作成失敗");}
-              );
-              
-              // 駅・エリアテーブル追加
-              tx.executeSql(
-                `CREATE TABLE "station_mst" (
-                  "id"	TEXT,
-                  "name"	TEXT
-                );`,
-                [],
-                () => {console.log("駅・エリアテーブル追加");},
-                () => {console.log("駅・エリアテーブル追加失敗");}
-              );
-              
-              // 住所テーブル追加
-              tx.executeSql(
-                `CREATE TABLE "address_mst" (
-                  "id"	TEXT,
-                  "name"	TEXT
-                );`,
-                [],
-                () => {console.log("住所テーブル追加");},
-                () => {console.log("住所テーブル追加失敗");}
-              );
-              
-              resolve();
-            }
+        // スタッフテーブル追加
+        tx.executeSql(
+          `CREATE TABLE "staff_mst" (
+            "account"	TEXT UNIQUE,
+            "password"	TEXT,
+            "shop_id"	TEXT,
+            "name_1"	TEXT,
+            "name_2"	TEXT,
+            "name"	TEXT,
+            "corporations_name"	TEXT,
+            "setting_list"	TEXT,
+            "app_token"	TEXT,
+            "system_mail"	TEXT,
+            "yahoomail"	TEXT,
+            "gmail"	TEXT,
+            "hotmail"	TEXT,
+            "outlook"	TEXT,
+            "softbank"	TEXT,
+            "icloud"	TEXT,
+            "original_mail"	TEXT,
+            "line_id"	TEXT,
+            "mail_name"	TEXT,
+            "mail1"	TEXT,
+            "mail2"	TEXT,
+            "mail3"	TEXT,
+            "top_staff_list"	TEXT,
+            "setting_list7_mail"	TEXT,
+            PRIMARY KEY("account")
+          );`,
+          [],
+          () => {console.log("スタッフテーブル追加");},
+          () => {console.log("スタッフテーブル追加失敗");}
+        );
+        
+        // スタッフインデックス作成
+        tx.executeSql(
+          `CREATE INDEX "index_staff_mst" ON "staff_mst" (
+            "account",
+            "shop_id"
+          );`,
+          [],
+          () => {console.log("スタッフインデックス作成");},
+          () => {console.log("スタッフインデックス作成失敗");}
+        );
+        
+        // スタッフ一覧テーブル追加
+        tx.executeSql(
+          `CREATE TABLE "staff_list" (
+            "account"	TEXT UNIQUE,
+            "name_1"	TEXT,
+            "name_2"	TEXT,
+            "check"	TEXT,
+            PRIMARY KEY("account")
+          );`,
+          [],
+          () => {console.log("スタッフ一覧テーブル追加");},
+          () => {console.log("スタッフ一覧テーブル追加失敗");}
+        );
+        
+        // スタッフ一覧インデックス作成
+        tx.executeSql(
+          `CREATE INDEX "index_staff_list" ON "staff_list" (
+            "account"
+          );`,
+          [],
+          () => {console.log("スタッフ一覧インデックス作成");},
+          () => {console.log("スタッフ一覧インデックス作成失敗");}
+        );
+        
+        // お客様テーブル追加
+        tx.executeSql(
+          `CREATE TABLE "customer_mst" (
+            "customer_id" TEXT UNIQUE,
+            "name" TEXT,
+            "kana" TEXT,
+            "time"	TEXT,
+            "title"	TEXT,
+            "note"	TEXT,
+            "mail1"	TEXT,
+            "mail2"	TEXT,
+            "mail3"	TEXT,
+            "line"	TEXT,
+            "staff_name"	TEXT,
+            "media"	TEXT,
+            "article_url"	TEXT,
+            "reverberation_user_id"	TEXT,
+            "coming_user_id"	TEXT,
+            "coming_day1"	TEXT,
+            "status"	TEXT,
+            PRIMARY KEY("customer_id")
+          );`,
+          [],
+          () => {console.log("お客様テーブル追加");},
+          () => {console.log("お客様テーブル追加失敗");}
+        );
+        
+        // お客様インデックス作成
+        tx.executeSql(
+          `CREATE INDEX "index_customer_mst" ON "customer_mst" (
+            "customer_id"
+          );`,
+          [],
+          () => {console.log("お客様インデックス作成");},
+          () => {console.log("お客様インデックス作成失敗");}
+        );
+        
+        // コミュニケーション履歴テーブル追加
+        tx.executeSql(
+          `CREATE TABLE "communication_mst" (
+            "communication_id" TEXT UNIQUE,
+            "customer_id" TEXT,
+            "speaker" TEXT,
+            "time" TEXT,
+            "title" TEXT,
+            "note" TEXT,
+            "line_note" TEXT,
+            "file_path" TEXT,
+            "status" TEXT,
+            "html_flg" TEXT,
+            PRIMARY KEY("communication_id")
+          );`,
+          [],
+          () => {console.log("コミュニケーション履歴テーブル追加");},
+          () => {console.log("コミュニケーション履歴テーブル追加失敗");}
+        );
+        
+        // コミュニケーション履歴インデックス作成
+        tx.executeSql(
+          `CREATE INDEX "index_communication_mst" ON "communication_mst" (
+            "customer_id",
+            "time",
+            "status"
+          );`,
+          [],
+          () => {console.log("コミュニケーション履歴インデックス作成");},
+          () => {console.log("コミュニケーション履歴インデックス作成失敗");}
+        );
+        
+        // 定型文テーブル追加
+        tx.executeSql(
+          `CREATE TABLE "fixed_mst" (
+            "fixed_id"	TEXT,
+            "category"	TEXT,
+            "title"	TEXT,
+            "mail_title"	TEXT,
+            "note"	TEXT
+          );`,
+          [],
+          () => {console.log("定型文テーブル追加");},
+          () => {console.log("定型文テーブル追加失敗");}
+        );
+        // 定型文インデックス作成
+        tx.executeSql(
+          `CREATE INDEX "index_fixed_mst" ON "fixed_mst" (
+            "category"
+          );`,
+          [],
+          () => {console.log("定型文インデックス作成");},
+          () => {console.log("定型文インデックス作成失敗");}
+        );
+        
+        // 駅・エリアテーブル追加
+        tx.executeSql(
+          `CREATE TABLE "station_mst" (
+            "id"	TEXT,
+            "name"	TEXT
+          );`,
+          [],
+          () => {console.log("駅・エリアテーブル追加");},
+          () => {console.log("駅・エリアテーブル追加失敗");}
+        );
+        
+        // 住所テーブル追加
+        tx.executeSql(
+          `CREATE TABLE "address_mst" (
+            "id"	TEXT,
+            "name"	TEXT
+          );`,
+          [],
+          () => {console.log("住所テーブル追加");},
+          () => {console.log("住所テーブル追加失敗");}
+        );
+        
+        resolve();
+      }
     );
     // tx.executeSql(
     //   `drop table staff_mst;`,

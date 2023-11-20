@@ -37,12 +37,12 @@ export default function CommunicationHistoryScreen(props) {
   const [staff_value, setStaff_Value] = useState(null);
   const [staffs, setStaffs] = useState([]);
   const items = staffs.map((item) => {
-                  return ({
-                    label: item.account!='all'?(item.name_1+'　'+(item.name_2?item.name_2:'')):'全員',
-                    value: item.account,
-                    key: item.account
-                  });
-                });
+    return ({
+      label: item.account!='all'?(item.name_1+'　'+(item.name_2?item.name_2:'')):'全員',
+      value: item.account,
+      key: item.account
+    });
+  });
   items.unshift({label:'担当無し',value:''});
   
   const [a, setA] = useState(false);
@@ -173,8 +173,8 @@ export default function CommunicationHistoryScreen(props) {
             [],
             (_, { rows }) => {
               const cus_offline_list = rows._array.map((r) => {
-                          return (r.customer_id);
-                        });
+                return (r.customer_id);
+              });
               const cus_offline_list_id = cus_offline_list.join();
               
               tx.executeSql(
@@ -302,8 +302,8 @@ export default function CommunicationHistoryScreen(props) {
     
     // route.websocket.send(JSON.stringify( { "flg": 'hello' } ));
     let catchmail_flg = JSON.parse( message.data );
-    console.log(catchmail_flg.message)
-    onRefresh()
+    console.log(catchmail_flg.message);
+    onRefresh();
   }
   
   // websocket通信(切断したら再接続)
@@ -311,11 +311,11 @@ export default function CommunicationHistoryScreen(props) {
     
     if (global.sp_token & global.sp_id) {
       console.log('closed');
-      const WS_URL = 'ws://52.194.19.123:8080/ws/'+route.params.shop_id+'/'
+      const WS_URL = 'ws://52.194.19.123:8080/ws/'+route.params.shop_id+'/';
       navigation.reset({
-          index: 0,
-          routes: [{ name: 'CommunicationHistory', params: route.params,websocket:new WebSocket(WS_URL),station:route.station,address:route.address,}],
-        });
+        index: 0,
+        routes: [{ name: 'CommunicationHistory', params: route.params,websocket:new WebSocket(WS_URL),station:route.station,address:route.address,}],
+      });
     }
     
   }
@@ -417,8 +417,8 @@ export default function CommunicationHistoryScreen(props) {
             (_, { rows }) => {
               
               const cus_offline_list = rows._array.map((r) => {
-                          return (r.customer_id);
-                        });
+                return (r.customer_id);
+              });
               const cus_offline_list_id = cus_offline_list.join();
               
               tx.executeSql(
@@ -527,13 +527,13 @@ export default function CommunicationHistoryScreen(props) {
               
               // 追加
               const local_staff_list = rocal.map((r) => {
-                            return (r.account);
-                          });
-                          
+                return (r.account);
+              });
+              
               const server_staff_list = staff_list.map((s_l) => {
-                            return (s_l.account);
-                          });
-                          
+                return (s_l.account);
+              });
+              
               const add_staff_list = server_staff_list.filter(c => local_staff_list.indexOf(c) == -1)
               
               staff_list.map((s_l) => {
@@ -729,13 +729,13 @@ export default function CommunicationHistoryScreen(props) {
               
               // 追加
               const local_cus_id = rocal.map((r) => {
-                            return (r.customer_id);
-                          });
-                          
+                return (r.customer_id);
+              });
+              
               const server_cus_id = customer.map((c) => {
-                            return (c.customer_user_id);
-                          });
-                          
+                return (c.customer_user_id);
+              });
+              
               const add_customer = server_cus_id.filter(c => local_cus_id.indexOf(c) == -1)
               
               customer.map((cus) => {
@@ -920,13 +920,13 @@ export default function CommunicationHistoryScreen(props) {
               
               // 追加
               const local_fixed_list = rocal.map((r) => {
-                            return (r.fixed_id);
-                          });
-                          
+                return (r.fixed_id);
+              });
+              
               const server_fixed_list = fixed.map((s_l) => {
-                            return (s_l.fixed_id);
-                          });
-                          
+                return (s_l.fixed_id);
+              });
+              
               const add_fixed_list = server_fixed_list.filter(c => local_fixed_list.indexOf(c) == -1)
               
               fixed.map((f) => {
@@ -1168,7 +1168,7 @@ export default function CommunicationHistoryScreen(props) {
           <TouchableOpacity
             style={styles.buttonContainer}
             onPress={onSubmit}
-            >
+          >
             <Text style={styles.buttonLabel}>検　索</Text>
           </TouchableOpacity>
           </View>
@@ -1197,7 +1197,6 @@ export default function CommunicationHistoryScreen(props) {
           initialNumToRender={10}
           data={memos}
           renderItem={({ item,index }) => {
-          
             if (!item.del_flg){
             
               return (
@@ -1208,21 +1207,21 @@ export default function CommunicationHistoryScreen(props) {
                     index==4?{borderBottomWidth:0}:{}
                   ]}
                   onPress={() => {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{
-                      name: 'TalkScreen' ,
-                      params: route.params ,
-                      customer:item.customer_id,
-                      websocket:route.websocket,
-                      station:route.station,
-                      address:route.address,
-                      staff:staffs,
-                      fixed:fixed,
-                      cus_name:item.name,
-                    }],
-                  });
-                }}
+                    navigation.reset({
+                      index: 0,
+                      routes: [{
+                        name: 'TalkScreen' ,
+                        params: route.params ,
+                        customer:item.customer_id,
+                        websocket:route.websocket,
+                        station:route.station,
+                        address:route.address,
+                        staff:staffs,
+                        fixed:fixed,
+                        cus_name:item.name,
+                      }],
+                    });
+                  }}
                 >
                   <View style={styles.ListInner}>
                     <View style={{flexDirection: 'row'}}>
