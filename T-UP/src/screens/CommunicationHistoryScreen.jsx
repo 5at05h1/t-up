@@ -82,7 +82,7 @@ export default function CommunicationHistoryScreen(props) {
     
     // ログイン時のみサーバーDB見に行く
     if (route.previous == 'LogIn'){
-      
+    
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
       method: 'POST',
@@ -478,7 +478,7 @@ export default function CommunicationHistoryScreen(props) {
                   );
                 });
               })
-                
+              
             }
             
             // 最新の情報に書き換える + 新しいスタッフ追加 + 削除
@@ -635,7 +635,7 @@ export default function CommunicationHistoryScreen(props) {
     });
   
   }
-        
+  
   // お客様情報＋最新のコミュニケーションデータベース登録
   function Insert_customer_db(customer){
     db.transaction((tx) => {
@@ -676,7 +676,7 @@ export default function CommunicationHistoryScreen(props) {
                   );
                 });
               })
-                
+              
             }
             
             // 最新の情報に書き換える + 新しいお客様追加 + 削除
@@ -873,7 +873,7 @@ export default function CommunicationHistoryScreen(props) {
                   );
                 });
               })
-                
+              
             }
             
             // 最新の定型文に書き換える + 新しい定型文追加 + 削除
@@ -1014,7 +1014,7 @@ export default function CommunicationHistoryScreen(props) {
     });
   
   }
-        
+  
   function onSubmit(){
     
     setLoading(true);
@@ -1037,7 +1037,7 @@ export default function CommunicationHistoryScreen(props) {
     })
     
     setLoading(false);
-      
+    
   };
   
   
@@ -1174,7 +1174,7 @@ export default function CommunicationHistoryScreen(props) {
           </View>
       </View>
       <DropDownPicker
-        style={styles.DropDown} 
+        style={styles.DropDown}
         dropDownContainerStyle={styles.dropDownContainer}
         open={open}
         value={staff_value}
@@ -1203,11 +1203,10 @@ export default function CommunicationHistoryScreen(props) {
               return (
               <>
                 <TouchableOpacity
-                  style=
-                    {[
-                      styles.ListItem,
-                      index==4?{borderBottomWidth:0}:{}
-                    ]}
+                  style={[
+                    styles.ListItem,
+                    index==4?{borderBottomWidth:0}:{}
+                  ]}
                   onPress={() => {
                   navigation.reset({
                     index: 0,

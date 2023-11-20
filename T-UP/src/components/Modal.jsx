@@ -293,7 +293,7 @@ export function MyModal1(props){
 	const pickDocument = async () => {
 	  
     var result = await DocumentPicker.getDocumentAsync({});
-  	  
+    
     if (result) {
 	    
       if(result.size > 7000000) {
@@ -529,9 +529,8 @@ export function MyModal1(props){
       
       axios.get(val.file_path)
         .then(res => {
-            
-            setFilename(val.file_path?'添付ファイル':'');
-            setFiledata({uri:res.config.url});
+          setFilename(val.file_path?'添付ファイル':'');
+          setFiledata({uri:res.config.url});
         })
         .catch((error) => {
           console.log(error);
@@ -1400,14 +1399,14 @@ export function MyModal3(props){
   
   if (selectedStations.length){
     var station = selectedStations.map(sv => 
-        sv.id
-      )
+      sv.id
+    )
   }
   
   if (selectedAddress.length){
     var areas = selectedAddress.map(sv => 
-        sv.id
-      )
+      sv.id
+    )
   }
   
   const onSubmit = () => {
@@ -1938,8 +1937,8 @@ export function MyModal3(props){
                   <Image
                     style={styles.propertyPhoto}
                     source={{
-                              uri: item.img_gaikan,
-                            }}
+                      uri: item.img_gaikan,
+                    }}
                   />
                   <View>
                     <Text><Text style={{color:'red'}}>{item.rent/10000}</Text>万({item.general}円)</Text>
@@ -2562,7 +2561,7 @@ export function MyModal6(props){
               {overlap.main.note}
             </Text>
           </ScrollView>
-          )
+        )
       } else if (num == '2') {
         
         // スタッフ名
