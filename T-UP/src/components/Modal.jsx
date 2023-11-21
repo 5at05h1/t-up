@@ -1,14 +1,14 @@
-import React,{useState, useEffect} from 'react';
+import React,{ useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking, TouchableWithoutFeedback
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 import * as ImagePicker from 'expo-image-picker';
-import Feather from 'react-native-vector-icons/Feather';
-import {Collapse, CollapseHeader, CollapseBody} from 'accordion-collapse-react-native';
+import { Feather, MaterialIcons } from 'react-native-vector-icons';
+import { Collapse, CollapseHeader, CollapseBody } from 'accordion-collapse-react-native';
 import { CheckBox } from 'react-native-elements';
 import MaterialChip from "react-native-material-chip"
 import Autocomplete from 'react-native-autocomplete-input';
@@ -17,6 +17,9 @@ import axios from 'axios';
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as SQLite from "expo-sqlite";
 import * as Permissions from "expo-permissions";
+import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
+import ColorPicker from 'react-native-color-picker-ios-android';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // DB接続
 const db = SQLite.openDatabase("db");
@@ -71,9 +74,10 @@ export function MyModal0(props){
 
 export function MyModal1(props){
   
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_select,options } = props;
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_select,options,options2 } = props;
   
   const [res,setRes] = useState(props.reservation);
+  const editorRef = useRef();
   
   useEffect(() => {
     setRes(props.reservation);
@@ -88,6 +92,8 @@ export function MyModal1(props){
   const [open, setOpen] = useState(false);
   const [cus_value, setCus_Value] = useState('');
   
+  const [inputCursorPosition, setInputCursorPosition] = useState(null);
+  
   const items1 = cus_mail.filter(Boolean).map((item) => {
     return ({
       label: item,
@@ -97,12 +103,106 @@ export function MyModal1(props){
   
   const [open2, setOpen2] = useState(false);
   const [shop_value, setShop_Value] = useState('');
+
   const items2 = shop_mail.filter(Boolean).map((item,key) => {
     return ({
       label: key==0?item.replace('@','_s@'):item,
       value: item,
     });
   });
+  
+  const [open3, setOpen3] = useState(false);
+  const [mail_format, setMail_Format] = useState('0');
+  
+  const items3 = [
+    { label: 'テキスト', value: '0' },
+    { label: 'HTML', value: '1' }
+  ];
+
+  const [filteredFixed, setFilteredFixed] = useState([]);
+
+  // リストからHTML用の定型文をフィルタリング
+  const filterFixedByCategory = (category) => {
+    const filtered = fixed.filter((obj) => obj.category !== category);
+    setFilteredFixed(filtered);
+  }
+
+  useEffect(() => {
+    if (mail_format === '0') {
+      // 形式がテキストの時は'HTML用'の定型文は表示しない
+      filterFixedByCategory('HTML用');
+    } else {
+      setFilteredFixed(fixed);
+    }
+  }, [mail_format, fixed]);
+
+  // 内容詳細の編集
+  const noteEdit = (text) => {
+    let urlPattern = /(^|\s|<.+?>)(https?:\/\/[^\s<>]+)($|\s|<.+?>)/g;
+
+    let extractedText = text.replace(urlPattern, function(match, p1, p2, p3) {
+      if (p1.startsWith("<a") || p1.startsWith("<img") || p1.startsWith("<area")) {
+        // URLの文字列がa,img,areaのどれかのタグで挟まれていたら、そのままのソースを返す
+        return match;
+      } else {
+        // URLの文字列がその他のHTMLタグかスペースに挟まれていたら、aタグで挟む
+        return p1 + "<a href='" + p2 + "'>" + p2 + "</a>" + p3;
+      }
+    });
+
+    extractedText = extractedText.split('”').join('"');
+
+    setNote(extractedText);
+  }
+
+  // 形式を変更した場合は件名と内容を空にする
+  const changeMailFormat = (value) => {
+    if (mail_format != value) {
+      Alert.alert(
+        "送信内容の形式を変更しますがよろしいですか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: () => {
+              if (note) {
+                Alert.alert(
+                  "入力されている【件名】と【送信内容】が削除されますがよろしいですか？",
+                  "",
+                  [
+                    {
+                      text: "はい",
+                      onPress: () => {
+                        setMail_Format(value);
+                        setNote('');
+                        setMail_subject('');
+                      }
+                    },
+                    {
+                      text: "いいえ",
+                      onPress: () => {
+                        return;
+                      }
+                    },
+                  ]
+                );
+              } else {
+                setMail_Format(value);
+                setNote('');
+                setMail_subject('');
+              }
+            }
+          },
+          {
+            text: "いいえ",
+            onPress: () => {
+              return;
+            }
+          },
+        ]
+      );
+    }
+  }
   
   useEffect(() => {
     
@@ -116,7 +216,7 @@ export function MyModal1(props){
     if (shop_mail.length>0) {
         
       // 既存のメールアドレス
-      setShop_Value(mail_select?mail_select:shop_mail[0])
+      setShop_Value(mail_select?mail_select:shop_mail[0]);
       
       // 送信元メールアドレスをアドレスによってGmailに自動変更
       if(shop_mail[2] && cus_mail.length>0) {
@@ -216,6 +316,36 @@ export function MyModal1(props){
 
   const openFixed = () => {
     setFixed(!Fixed);
+  };
+  
+  // HTMLエディタのキーボードを閉じる
+  const keyboardClose = () => {
+    if (mail_format == '1') {
+      editorRef.current.dismissKeyboard();
+    }
+  };
+
+  const [disabled, setDisabled] = useState(true);
+
+  useEffect(() => {
+    // HTMLエディタのキーボードが表示されている時だけTouchableWithoutFeedbackのdisabledをtrueにする
+    if (editorRef.current) {
+      if (editorRef.current._focus) {
+        setDisabled(false);
+      } else {
+        setDisabled(true);
+      }
+    } else {
+      setDisabled(true);
+    }
+  }, [keyboardClose])
+
+  // HTMLエディタの文字の色
+  const [color, setColor] = useState(false);
+  const [textColor, setTextColor] = useState('#000');
+
+  const openTextColor = () => {
+    setColor(!color);
   };
   
   // オンライン通話
@@ -372,7 +502,7 @@ export function MyModal1(props){
     }
     
     setCon_flg(true);
-    props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file]],'mail');
+    props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,checked,checked?formatDate(date):'',res_id,1,true,filedata,del_file],mail_format],'mail');
     props.setModal1(false)
     setNote('');
     setCus_Value(cus_mail[0]);
@@ -382,6 +512,7 @@ export function MyModal1(props){
     setCheck(false);
     setFilename('');
     setFiledata(null);
+    setInputCursorPosition(null);
   }
 
   const onSubmit = () => {
@@ -414,7 +545,7 @@ export function MyModal1(props){
             {
               text: "はい",
               onPress: () => {
-                props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
+                props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
                 props.setModal1(false)
                 setNote('');
                 setCus_Value(cus_mail[0]);
@@ -424,6 +555,7 @@ export function MyModal1(props){
                 setCheck(false);
                 setFilename('');
                 setFiledata(null);
+                setInputCursorPosition(null);
               }
             },
             {
@@ -433,7 +565,7 @@ export function MyModal1(props){
           ]
         );
       } else {
-        props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata]],'mail');
+        props.onSend([formatDate(date),'メール送信',note,[cus_value,shop_value,mail_subject,isEnabled||checked,isEnabled||checked?formatDate(date):'',res_id,'',true,filedata],mail_format],'mail');
         props.setModal1(false)
         setNote('');
         setCus_Value(cus_mail[0]);
@@ -443,6 +575,7 @@ export function MyModal1(props){
         setCheck(false);
         setFilename('');
         setFiledata(null);
+        setInputCursorPosition(null);
       }
     } else {
       Alert.alert('送信内容が記入されていません');
@@ -492,6 +625,7 @@ export function MyModal1(props){
             setCheck(false);
             setFilename('');
             setFiledata(null);
+            setInputCursorPosition(null);
           }
         },
         {
@@ -511,6 +645,7 @@ export function MyModal1(props){
     setCheck(false);
     setFilename('');
     setFiledata(null);
+    setInputCursorPosition(null);
   }
   
   const img_Delete = () => {
@@ -673,6 +808,24 @@ export function MyModal1(props){
     }
   }
 
+  const [fontsize,setFontsize] = useState(3);
+
+  const fontSize = (size) => {
+    // 1= 10px, 2 = 13px, 3 = 16px, 4 = 18px, 5 = 24px, 6 = 32px, 7 = 48px;
+    const newSize = size ? fontsize + 1 : fontsize - 1;
+    
+    const clampedSize = Math.min(7, Math.max(1, newSize));
+    
+    editorRef.current?.setFontSize(clampedSize);
+    setFontsize(clampedSize);
+  };
+  
+  useEffect(() => {
+    if (textColor) {
+      editorRef.current?.setForeColor(textColor);
+    }
+  }, [textColor])
+
   return (
     <Modal
       isVisible={isVisible}
@@ -682,6 +835,7 @@ export function MyModal1(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
+      onBackdropPress={onClose}
     >
       <MyModal3 
         isVisible={Property}
@@ -694,18 +848,23 @@ export function MyModal1(props){
         c_d={c_d}
         setNote={setNote}
         msgtext={note}
+        mail_format={mail_format}
+        editorRef={editorRef}
+        inputCursorPosition={inputCursorPosition}
       />
       <MyModal4 
         isVisible={Fixed}
         onSwipeComplete={() => { setFixed(false) }}
         onPress={() => { setFixed(false) }}
-        fixed={fixed}
+        fixed={filteredFixed}
         hensu={hensu}
         setMail_subject={setMail_subject}
         setNote={setNote}
         setFixed={setFixed}
+        mail_format={mail_format}
+        editorRef={editorRef}
       />
-      <View style={styles.sydemenu}>
+      <View style={[styles.sydemenu,{top: Platform.OS === "ios" ? 20 : 0}]}>
         <TouchableOpacity
           style={styles.menucircle}
           onPress={openProperty}
@@ -726,7 +885,7 @@ export function MyModal1(props){
         </TouchableOpacity>
       </View>
       <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[{height:Platform.OS === "ios" ? 500 : 600},styles.modalInner]}>
+        <View style={[{height:650},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
             onPress={onClose}
@@ -737,87 +896,196 @@ export function MyModal1(props){
             {/* <ScrollView 
               style={{height:Platform.OS === "ios" ? 400 : 500}}
             > */}
-            <FlatList
-              style={{height:Platform.OS === "ios" ? 400 : 500}}
-              data={[(
-                <>
-                  {rrr()}
-                  <Text style={styles.label}>宛先</Text>
-                  <DropDownPicker
-                    open={open}
-                    value={cus_value}
-                    items={items1}
-                    setOpen={setOpen}
-                    setValue={setCus_Value}
-                    style={styles.inputInner}
-                    placeholder = {'----------------'}
-                    zIndex={101}
-                    translation={{
-                      NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-                    }}
-                    onClose={() => {setAuto_gmail(1)}}
-                  />
-                  <Text style={styles.label}>送信元</Text>
-                  <DropDownPicker
-                    open={open2}
-                    value={shop_value}
-                    items={items2}
-                    setOpen={setOpen2}
-                    setValue={setShop_Value}
-                    style={styles.inputInner}
-                    placeholder={'----------------'}
-                    zIndex={100}
-                  />
-                  <View style={styles.input}>
-                    <Text style={styles.label}>件名</Text>
-                    <TextInput
-                      onChangeText={(text) => setMail_subject(text)}
-                      value={mail_subject}
-                      style={styles.inputInner}
-                    />
-                  </View>
-                  <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
-                    <TouchableOpacity onPress={pickDocument} style={styles.file}>
-                      <Text>ファイル添付</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={pickImage} style={styles.file}>
-                      <Text>画像添付</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
-                    <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
-                      <Feather name='x-circle' color='gray' size={25} />
-                    </TouchableOpacity>
-                    <Text>{filename}</Text>
-                  </View>
-                  <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text> 
-                  <View zIndex={99}>{mail_reservation()}</View>
-                  <View style={styles.input}>
-                    <Text style={styles.label}>内容詳細</Text>
-                    <TextInput
-                      onChangeText={(text) => {setNote(text)}}
-                      value={note}
-                      style={styles.textarea}
-                      multiline={true}
-                      disableFullscreenUI={true}
-                      numberOfLines={11}
-                    />
-                  </View>
-                  <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
-                    <TouchableOpacity onPress={onDraft} style={styles.draft}>
-                      <Text>下書き保存</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={onSubmit} style={styles.submit}>
-                      <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )]}
-              renderItem={({ item }) => (
-                <>{item}</>
-              )}
-            />
+            <TouchableWithoutFeedback
+              disabled={disabled}
+              onPress={keyboardClose}
+            >
+              <View>
+                <FlatList
+                  style={{height: mail_format == '1' ? 200 : 500}}
+                  data={[(
+                    <>
+                      {rrr()}
+                      <Text style={styles.label}>宛先</Text>
+                      <DropDownPicker
+                        open={open}
+                        value={cus_value}
+                        items={items1}
+                        setOpen={setOpen}
+                        setValue={setCus_Value}
+                        style={styles.inputInner}
+                        placeholder = {'----------------'}
+                        zIndex={101}
+                        translation={{
+                          NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                        }}
+                        onClose={() => {setAuto_gmail(1)}}
+                      />
+                      <Text style={styles.label}>送信元</Text>
+                      <DropDownPicker
+                        open={open2}
+                        value={shop_value}
+                        items={items2}
+                        setOpen={setOpen2}
+                        setValue={setShop_Value}
+                        style={styles.inputInner}
+                        placeholder={'----------------'}
+                        zIndex={100}
+                      />
+                      {options2 && options2.includes('1') && (
+                        <>
+                          <Text style={styles.label}>形式</Text>
+                          <View style={{ zIndex: 99 }}>
+                            <DropDownPicker
+                              open={open3}
+                              value={mail_format}
+                              items={items3}
+                              setOpen={setOpen3}
+                              style={[styles.inputInner,{width: 200}]}
+                              dropDownContainerStyle={{width: 200}}
+                              placeholder={'----------------'}
+                              onOpen={() => {
+                                setOpen3(!open3);
+                              }}
+                              onSelectItem={(item)=>changeMailFormat(item.value)}
+                            />
+                          </View>
+                        </>
+                      )}
+                      <View style={styles.input}>
+                        <Text style={styles.label}>件名</Text>
+                        <TextInput
+                          onChangeText={(text) => setMail_subject(text)}
+                          value={mail_subject}
+                          style={styles.inputInner}
+                        />
+                      </View>
+                      <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
+                        <TouchableOpacity onPress={pickDocument} style={styles.file}>
+                          <Text>ファイル添付</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={pickImage} style={styles.file}>
+                          <Text>画像添付</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
+                        <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
+                          <Feather name='x-circle' color='gray' size={25} />
+                        </TouchableOpacity>
+                        <Text>{filename}</Text>
+                      </View>
+                      <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
+                      <View zIndex={99}>{mail_reservation()}</View>
+                      <View style={styles.input}>
+                        {mail_format !== '1' ? (
+                          <>
+                            <Text style={styles.label}>内容詳細</Text>
+                            <TextInput
+                              onChangeText={(text) => {setNote(text)}}
+                              value={note}
+                              style={styles.textarea}
+                              multiline={true}
+                              disableFullscreenUI={true}
+                              numberOfLines={11}
+                              onSelectionChange={(event) => {setInputCursorPosition(event.nativeEvent.selection);}}
+                            />
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                      </View>
+                    </>
+                  )]}
+                  renderItem={({ item }) => (
+                    <>{item}</>
+                  )}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+            {mail_format == '1' ? (
+              <>
+                <MyModal8 
+                  isVisible={color}
+                  openTextColor={openTextColor}
+                  setTextColor={setTextColor}
+                  textColor={textColor}
+                />
+                <View style={[{marginBottom: 5,flexDirection: 'row',alignItems: 'center'}]}>
+                  <Text style={styles.label}>内容詳細</Text>
+                </View>
+                <RichToolbar
+                  editor={editorRef}
+                  iconTint={"black"}
+                  selectedIconTint={"white"}
+                  actions={[
+                    actions.keyboard,
+                    actions.undo,
+                    actions.redo,
+                    actions.setBold,
+                    actions.setItalic,
+                    actions.setUnderline,
+                    actions.insertLine,
+                    actions.setStrikethrough,
+                    'fontSize_add',
+                    'fontSize_pull',
+                    'ForeColor',
+                    actions.indent,
+                    actions.outdent,
+                    actions.alignLeft,
+                    actions.alignCenter,
+                    actions.alignRight,
+                    actions.alignFull,
+                    actions.setSubscript,
+                    actions.setSuperscript,
+                    actions.checkboxList,
+                  ]}
+                  iconMap={{
+                    fontSize_add: ({ tintColor }) => (
+                      <TouchableOpacity onPress={()=>fontSize(true)}>
+                        <MaterialCommunityIcons name="format-font-size-increase" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                    fontSize_pull: ({ tintColor }) => (
+                      <TouchableOpacity onPress={()=>fontSize(false)}>
+                        <MaterialCommunityIcons name="format-font-size-decrease" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                    ForeColor: ({ tintColor }) => (
+                      <TouchableOpacity onPress={openTextColor}>
+                        <MaterialIcons name="format-color-text" size={24} color={tintColor} />
+                      </TouchableOpacity>
+                    ),
+                  }}
+                />
+                <RichEditor
+                  ref={editorRef}
+                  style={styles.editor}
+                  onChange={(text) => noteEdit(text)}
+                  initialHeight={220}
+                  onMessage={(data)=>{
+                    var txt = data.data;
+                    var check_txt = '';
+                    if (txt.length > 5) {
+                      check_txt = txt.slice(-5);
+                    } else {
+                      check_txt = txt;
+                    }
+                    setInputCursorPosition(check_txt.trim());
+                  }}
+                />
+              </>
+            ) : (
+              <></>
+            )}
             {/* </ScrollView> */}
+            <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
+              <TouchableOpacity onPress={onDraft} style={styles.draft}>
+                <Text>下書き保存</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onSubmit} style={styles.submit}>
+                <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -950,6 +1218,7 @@ export function MyModal2(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
+      onBackdropPress={onClose}
     >
     <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={[{height:500},styles.bottom,styles.modalInner]}>
@@ -996,7 +1265,7 @@ export function MyModal2(props){
 
 export function MyModal3(props){
   
-  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d } = props;
+  const { route,isVisible,onSwipeComplete,onClose,msgtext,property,station_list,address,c_d,mail_format,editorRef,inputCursorPosition } = props;
   
   const [isRecommended, setRecommended] = useState(false);
 
@@ -1153,7 +1422,7 @@ export function MyModal3(props){
     if (query) {
       const regex = new RegExp(`${query.trim()}`, 'i');
       setFilteredStations(
-          station_list.filter((station) => station.name.search(regex) >= 0)
+        station_list.filter((station) => station.name.search(regex) >= 0)
       );
     } else {
       setFilteredStations([]);
@@ -1517,16 +1786,70 @@ export function MyModal3(props){
   
   const [search_results,setSearch_results] = useState(false);
   
+  // HTML形式に変換
+  function convertToHTML(text) {
+    let urlPattern = /(^|\s|<.+?>)(https?:\/\/[^\s<>]+)($|\s|<.+?>)/g;
+    let extractedText;
+
+    if (/(<\/?[^>]+(>|$)|&nbsp;)/gi.test(text)) {
+      // 既にHTMLソースの場合
+      extractedText = text.split('”').join('"');
+    } else {
+      // 普通の文字列の場合
+      extractedText = text.replace(/\n/g, '<br />\n');
+    }
+
+    extractedText = extractedText.replace(urlPattern, function(match, p1, p2, p3) {
+      if (p1.startsWith("<a") || p1.startsWith("<img") || p1.startsWith("<area")) {
+        // URLの文字列がa,img,areaのどれかのタグで挟まれていたら、そのままのソースを返す
+        return match;
+      } else {
+        // URLの文字列がその他のHTMLタグかスペースに挟まれていたら、aタグで挟む
+        return p1 + "<a href='" + p2 + "'>" + p2 + "</a>" + p3;
+      }
+    });
+
+    return extractedText;
+  }
+
   const [insertMsg,setInsertMsg] = useState(false);
   
+  // 物件挿入
   const proInsert = (item) => {
     
     var msg = item.article_name+"／"+item.layout+"／"+item.category+"\n"+
               item.line_name1+"／"+item.station_name1+"駅／徒歩"+item.station_time1+"分／"+
               item.rent/10000+"万円("+item.general+"円)／"+item.exclusive+"㎡"+"\n\n"+
               "https://www.t-up.systems/show/"+route.customer+"/1/"+item.article_id+"/"+"\n";
+
+    if (mail_format == '1') {
+      // HTMLエディタのカーソル位置に挿入
+      msg = convertToHTML(msg);
+      
+      if (inputCursorPosition != null) {
+        var index = msgtext.indexOf(inputCursorPosition);
+        if (index != -1) {
+          msg = '\n' + '<div>' + msg + '</div>';
+          proMsg = msgtext.slice(0, index + inputCursorPosition.length) + msg + msgtext.slice(index + inputCursorPosition.length);
+        } else {
+          proMsg = msgtext + msg;
+        }
+      } else {
+        proMsg = msg + msgtext;
+      }
+    } else if (mail_format == '0') {
+      // TextInputのカーソル位置に挿入
+      if (inputCursorPosition != null) {
+        proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
+      } else {
+        proMsg = msgtext + msg;
+      }
+    } else {
+      // トーク画面
+      proMsg = msgtext + msg;
+    }
     
-    setInsertMsg(msgtext?msgtext + msg:msg);
+    setInsertMsg(msgtext?proMsg:msg);
   }
   
   useEffect(() => {
@@ -1534,6 +1857,9 @@ export function MyModal3(props){
       props.setMsgtext(insertMsg);
     } else if (props.setNote) {
       props.setNote(insertMsg);
+      if (mail_format == '1' && insertMsg) {
+        editorRef.current.setContentHTML(insertMsg);
+      }
     }
   },[insertMsg])
   
@@ -1549,6 +1875,7 @@ export function MyModal3(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       propagateSwipe={true}
+      onBackdropPress={onClose}
     >
       <View  style={[{height:400},styles.template]}>
         <TouchableOpacity
@@ -1558,8 +1885,8 @@ export function MyModal3(props){
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
         <Text style={styles.templateText}>
-        指定されている条件でおすすめ物件が表示されます。{"\n"}
-        [挿入]ボタンをクリックすると文中に挿入されます。
+          指定されている条件でおすすめ物件が表示されます。{"\n"}
+          [挿入]ボタンをクリックすると文中に挿入されます。
         </Text>
         <TouchableOpacity style={styles.searchBtn} onPress={recommended}>
           <Text>オススメ物件を探す</Text>
@@ -1571,9 +1898,9 @@ export function MyModal3(props){
           animationOutTiming={500}
           animationIn={'slideInDown'}
           animationOut={'slideOutUp'}
+          onBackdropPress={recommended}
         >
           <View style={[{height:600},styles.modalInner]}>
-            
             <TouchableOpacity
               style={styles.close}
               onPress={recommended}
@@ -1927,10 +2254,9 @@ export function MyModal3(props){
           </View>
         </Modal>
         <FlatList 
-        horizontal
-        data={search_results?search_results:property}
-        renderItem={({ item }) => 
-          (
+          horizontal
+          data={search_results?search_results:property}
+          renderItem={({ item }) => (
             <TouchableOpacity
               activeOpacity={1}
               style={styles.property}
@@ -1968,8 +2294,7 @@ export function MyModal3(props){
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
-            )
-          }
+          )}
           keyExtractor={(item) => `${item.article_id}`}
         />
       </View>
@@ -1979,13 +2304,17 @@ export function MyModal3(props){
 
 export function MyModal4(props){
   
-  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu } = props;
+  const { isVisible,onSwipeComplete,onPress,fixed,msgtext,subject,hensu,mail_format,editorRef } = props;
+
+  const [fixed_category, setFixed_Category] = useState([]);
   
-  // カテゴリーの重複を検出したものを重複しないでリスト
-  const f_c = fixed.map((c) =>{
-    return c.category
-  })
-  const [fixed_category,setFixed_Category] = useState(Array.from(new Set(f_c)));
+  useEffect(() => {
+    // カテゴリーの重複を検出したものを重複しないでリスト
+    const f_c = fixed.map((c) =>{
+      return c.category
+    })
+    setFixed_Category(Array.from(new Set(f_c)));
+  }, [fixed]);
   
   const [chatbot,setChatbot] = useState([]);
   
@@ -2009,6 +2338,32 @@ export function MyModal4(props){
     })
     
     return l;
+  }
+  
+  // HTML形式に変換
+  function convertToHTML(text) {
+    let urlPattern = /(^|\s|<.+?>)(https?:\/\/[^\s<>]+)($|\s|<.+?>)/g;
+    let extractedText;
+
+    if (/(<\/?[^>]+(>|$)|&nbsp;)/gi.test(text)) {
+      // 既にHTMLソースの場合
+      extractedText = text.split('”').join('"');
+    } else {
+      // 普通の文字列の場合
+      extractedText = text.replace(/\n/g, '<br />\n');
+    }
+
+    extractedText = extractedText.replace(urlPattern, function(match, p1, p2, p3) {
+      if (p1.startsWith("<a") || p1.startsWith("<img") || p1.startsWith("<area")) {
+        // URLの文字列がa,img,areaのどれかのタグで挟まれていたら、そのままのソースを返す
+        return match;
+      } else {
+        // URLの文字列がその他のHTMLタグかスペースに挟まれていたら、aタグで挟む
+        return p1 + "<a href='" + p2 + "'>" + p2 + "</a>" + p3;
+      }
+    });
+
+    return extractedText;
   }
   
   // 書き換え
@@ -2084,6 +2439,10 @@ export function MyModal4(props){
       }
     }
     
+    if (mail_format == '1') {
+      note = convertToHTML(note);
+    }
+    
     if(msgtext || subject || props.setNote || props.setMail_subject) {
       Alert.alert(
         "入力されている【件名】と【本文】が削除されますがよろしいですか？",
@@ -2098,6 +2457,9 @@ export function MyModal4(props){
               } else if (props.setNote && props.setMail_subject) {
                 props.setNote(note);
                 props.setMail_subject(title);
+                if (mail_format == '1') {
+                  editorRef.current.setContentHTML(note);
+                }
               }
               
               if (props.setFixed) {
@@ -2137,6 +2499,7 @@ export function MyModal4(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       propagateSwipe={true}
+      onBackdropPress={onPress}
     >
       <View  style={[{height:300},styles.template]}>
         <TouchableOpacity
@@ -2972,6 +3335,36 @@ export function MyModal7(props){
   
 }
 
+export function MyModal8(props){
+  
+  const { isVisible, openTextColor, setTextColor, textColor } = props;
+  
+  return (
+    <Modal
+      isVisible={isVisible}
+      onBackdropPress={openTextColor}
+    >
+      <View style={styles.modalInner}>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top:8,
+            right:10,
+            zIndex:1000
+          }}
+          onPress={openTextColor}
+        >
+          <Feather name='x-circle' color='gray' size={35} />
+        </TouchableOpacity>
+        <ColorPicker
+          color={textColor}
+          onColorChangeComplete={(color) => {setTextColor(color)}}
+        />
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   modalInner: {
     justifyContent: 'center',
@@ -3214,5 +3607,9 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#1f2d53',
     marginHorizontal:10
-  }
+  },
+  editor: {
+    borderColor: '#1f2d53',
+    borderWidth: 1,
+  },
 })

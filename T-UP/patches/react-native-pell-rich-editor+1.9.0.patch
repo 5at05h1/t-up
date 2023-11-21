@@ -1,0 +1,90 @@
+diff --git a/node_modules/react-native-pell-rich-editor/src/RichEditor.js b/node_modules/react-native-pell-rich-editor/src/RichEditor.js
+index 14bea22..d934170 100644
+--- a/node_modules/react-native-pell-rich-editor/src/RichEditor.js
++++ b/node_modules/react-native-pell-rich-editor/src/RichEditor.js
+@@ -211,7 +211,8 @@ export default class RichTextEditor extends Component {
+   setWebHeight(height) {
+     const {onHeightChange, useContainer, initialHeight} = this.props;
+     if (height !== this.state.height) {
+-      const maxHeight = Math.max(height, initialHeight);
++      // const maxHeight = Math.max(height, initialHeight);
++      const maxHeight = initialHeight;
+       if (!this.unmount && useContainer && maxHeight >= initialHeight) {
+         this.setState({height: maxHeight});
+       }
+@@ -258,7 +259,7 @@ export default class RichTextEditor extends Component {
+       <>
+         <WebView
+           useWebKit={true}
+-          scrollEnabled={false}
++          scrollEnabled={true}
+           hideKeyboardAccessoryView={true}
+           keyboardDisplayRequiresUserAction={false}
+           nestedScrollEnabled={!useContainer}
+@@ -281,6 +282,7 @@ export default class RichTextEditor extends Component {
+             }
+             return true;
+           }}
++          injectedJavaScript={`document.body.style.overflow = 'auto'; document.body.style.webkitOverflowScrolling = 'touch';`}
+         />
+         {Platform.OS === 'android' && <TextInput ref={ref => (that._input = ref)} style={styles._input} />}
+       </>
+diff --git a/node_modules/react-native-pell-rich-editor/src/editor.js b/node_modules/react-native-pell-rich-editor/src/editor.js
+index 92079ad..27ca9ed 100644
+--- a/node_modules/react-native-pell-rich-editor/src/editor.js
++++ b/node_modules/react-native-pell-rich-editor/src/editor.js
+@@ -322,7 +322,7 @@ function createHTML(options = {}) {
+                     });
+                 }
+                 return flag;
+-             }},
++            }},
+             line: { result: function() { return exec('insertHorizontalRule'); }},
+             redo: { result: function() { return exec('redo'); }},
+             undo: { result: function() { return exec('undo'); }},
+@@ -563,7 +563,7 @@ function createHTML(options = {}) {
+             function handler() {
+                 var activeTools = [];
+                 for(var k in actionsHandler){
+-                    const state =  Actions[k].state() 
++                    const state = Actions[k].state();
+                     if ( state ){
+                         activeTools.push(typeof state === "boolean" ? k : {type: k, value: Actions[k].state()});
+                     }
+@@ -571,10 +571,27 @@ function createHTML(options = {}) {
+                 postAction({type: 'SELECTION_CHANGE', data: activeTools});
+             };
+ 
++            function getPosition() {
++
++                var selection = window.getSelection();
++                var cursorPosition = 0;
++
++                if (selection.rangeCount > 0) {
++                    var range = selection.getRangeAt(0);
++                    var preCaretRange = range.cloneRange();
++                    preCaretRange.selectNodeContents(content);
++                    preCaretRange.setEnd(range.endContainer, range.endOffset);
++                    cursorPosition = preCaretRange.toString();
++                }
++
++                postAction({type: 'SELECTION_GET', data: cursorPosition});
++            };
++
+             var _handleStateDT = null;
+             function handleState(){
+                 clearTimeout(_handleStateDT);
+                 _handleStateDT = setTimeout(function (){
++                    getPosition();
+                     handler();
+                     saveSelection();
+                 }, 50);
+@@ -596,7 +613,7 @@ function createHTML(options = {}) {
+             }
+             function handleKeydown(event){
+                 _keyDown = true;
+-                 handleState();
++                handleState();
+                 if (event.key === 'Enter'){
+                     enterStatus = 1; // set enter true
+                     var box;

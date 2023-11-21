@@ -40,6 +40,7 @@ export default function TalkScreen(props) {
   const [customer, setCustomer] = useState(false);
   const [staff, setStaff] = useState([]);
   const [options, setOptions] = useState(false);
+  const [options2, setOptions2] = useState(false);
   const [overlap, setOverlap] = useState(false);
   
   const [menu, setMenu] = useState(false);
@@ -65,6 +66,8 @@ export default function TalkScreen(props) {
   const [inquiry_text,setInquiry_text] = useState(false);
   
   const [tantou,setTantou] = useState(false);
+  
+  const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
   // 端末の戻るボタン
   const backAction = () => {
@@ -206,6 +209,7 @@ export default function TalkScreen(props) {
         setChatbot(json['chatbot_array']);
         setInquiry(json['inquiry']);
         setOptions(json['staff'].option_list.includes('14'));
+        setOptions2(json['staff'].option_list.split(","));
         setOverlap(json['overlap']);
         setLoading(false);
         
@@ -306,6 +310,7 @@ export default function TalkScreen(props) {
         setChatbot(json['chatbot_array']);
         setInquiry(json['inquiry']);
         setOptions(json['staff'].option_list.includes('14'));
+        setOptions2(json['staff'].option_list.split(","));
       })
       .catch((error) => {
         const errorMsg = "更新に失敗しました";
@@ -739,6 +744,7 @@ export default function TalkScreen(props) {
       formData.append('pass',route.params.password);
       formData.append('customer_id',customer.main.customer_id);
       formData.append('mail_flg',1);
+      formData.append('html_flg',add[4]);
       formData.append('act','get_talk');
       formData.append('reservation_flg',add[3][3]?add[3][3]:'');
       formData.append('draft_flg',add[3][6]?add[3][6]:'');
@@ -784,6 +790,8 @@ export default function TalkScreen(props) {
           Alert.alert("送信に失敗しました");
         })
     }
+
+    setInputCursorPosition(null);
   }
   
   if(menu){
@@ -1123,7 +1131,15 @@ export default function TalkScreen(props) {
             </TouchableOpacity>
           )
         } else {
-          return (<Composer {...props}/>)
+          return (
+            <Composer
+              {...props}
+              textInputProps={{
+                ...props.textInputProps,
+                onSelectionChange: (event) => setInputCursorPosition(event.nativeEvent.selection)
+              }}
+            />
+          )
         }
       }}
       user={{_id: 1,text:msgtext}}
@@ -1144,26 +1160,28 @@ export default function TalkScreen(props) {
       // ↑を押したときのイベント
       onPressActionButton={() => setMenu(!menu)}
       // メニュー開いたらメッセージも上に表示する
+      minInputToolbarHeight={30}
       messagesContainerStyle={[
-        menu?
-          Platform.select({
-            ios: {height:400},
-            android: {height:550},
-          })
-          :null,
-        menu&&menu_height?
-          Platform.select({
-            ios: {height:400-menu_height},
-            android: {height:550-menu_height},
-          })
-          :null,
+        menu&&{paddingBottom:190}
+        // menu?
+        //   Platform.select({
+        //     ios: {height:400},
+        //     android: {height:550},
+        //   })
+        //   :null,
+        // menu&&menu_height?
+        //   Platform.select({
+        //     ios: {height:400-menu_height},
+        //     android: {height:550-menu_height},
+        //   })
+        //   :null,
       ]}
       
       onLayout={(e) => getHeight(e)}
       maxComposerHeight={150}
       
       // 入力欄の下のスペース
-      bottomOffset={Platform.select({ios: 35})} // 入力欄下の謎のすき間埋める(iosのみ)
+      bottomOffset={Platform.select({ios: 15})} // 入力欄下の謎のすき間埋める(iosのみ)
       renderInputToolbar={(props) => (
         <InputToolbar 
           {...props}
@@ -1248,6 +1266,7 @@ export default function TalkScreen(props) {
               ]:[]}
               mail_select={staff.mail_select}
               options={options}
+              options2={options2}
             />
             <MyModal2
               isVisible={modal2}
@@ -1284,6 +1303,8 @@ export default function TalkScreen(props) {
               c_d={conditions_date}
               msgtext={props.user.text}
               setMsgtext={setMsgtext}
+              inputCursorPosition={inputCursorPosition}
+              mail_format={'0'}
             />
             <MyModal4
               isVisible={modal4}
