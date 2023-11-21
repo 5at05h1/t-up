@@ -511,7 +511,7 @@ export default function TalkScreen(props) {
                 
               });
             })
-              
+            
           }
           
           // del_flgデータ削除 + 新しいコミュニケーション履歴追加
@@ -787,7 +787,7 @@ export default function TalkScreen(props) {
   }
   
   if(menu){
-    Keyboard.dismiss() // キーボード隠す
+    Keyboard.dismiss(); // キーボード隠す
   }
   
   // カメラロールから画像またはビデオを選択

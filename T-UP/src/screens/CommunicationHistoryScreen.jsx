@@ -1171,7 +1171,7 @@ export default function CommunicationHistoryScreen(props) {
           >
             <Text style={styles.buttonLabel}>検　索</Text>
           </TouchableOpacity>
-          </View>
+        </View>
       </View>
       <DropDownPicker
         style={styles.DropDown}

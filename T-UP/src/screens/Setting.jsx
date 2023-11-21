@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from "react";
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, ScrollView, Platform, KeyboardAvoidingView
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, BackHandler, AppState, ScrollView, FlatList, Platform, KeyboardAvoidingView
 } from "react-native";
 import RadioButtonRN from 'radio-buttons-react-native';
 import * as Notifications from 'expo-notifications';
@@ -647,7 +647,10 @@ function Delete_staff_db(){
       style={{ flex: 1 }}
     >
       <Loading isLoading={isLoading} />
-      <ScrollView contentContainerStyle={styles.form}>
+      {/* <ScrollView contentContainerStyle={styles.form}> */}
+      <FlatList
+        style={styles.form}
+        data={[(
         <GestureRecognizer
           onSwipeRight={()=>{backAction()}}
           style={{flex: 1}}
@@ -991,7 +994,12 @@ function Delete_staff_db(){
             <Text style={styles.submitLabel}>確　定</Text>
           </TouchableOpacity>
         </GestureRecognizer>
-      </ScrollView>
+        )]}
+        renderItem={({ item }) => (
+          <>{item}</>
+        )}
+      />
+      {/* </ScrollView> */}
     </KeyboardAvoidingView>
   );
 }

@@ -220,7 +220,7 @@ export function MyModal1(props){
   
   // オンライン通話
 	const openOnline_call = async (id) => {
-	  
+    
 	  // カメラのアクセス許可を付与
     if (Platform.OS !== 'web') {
         const { status } = await Permissions.askAsync(Permissions.CAMERA);
@@ -238,7 +238,7 @@ export function MyModal1(props){
         return
       }
     }
-	  
+    
     Alert.alert(
       "通話画面を開きますか？",
       "",
@@ -292,11 +292,11 @@ export function MyModal1(props){
   const [del_file,setDel_file] = useState('');
   
 	const pickDocument = async () => {
-	  
+    
     var result = await DocumentPicker.getDocumentAsync({});
     
     if (result) {
-	    
+      
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
@@ -309,7 +309,7 @@ export function MyModal1(props){
   
   // 画像選択
 	const pickImage = async () => {
-	  
+    
     // カメラロールのアクセス許可を付与
     if (Platform.OS !== 'web') {
       const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -341,7 +341,7 @@ export function MyModal1(props){
       allowsEditing: true,
       quality: 1,
     });
-	  
+    
     if (result) {
       if(result.size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
@@ -734,80 +734,90 @@ export function MyModal1(props){
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
           <View style={styles.form}>
-            <ScrollView 
+            {/* <ScrollView 
               style={{height:Platform.OS === "ios" ? 400 : 500}}
-            >
-            {rrr()}
-            <Text style={styles.label}>宛先</Text>
-            <DropDownPicker
-              open={open}
-              value={cus_value}
-              items={items1}
-              setOpen={setOpen}
-              setValue={setCus_Value}
-              style={styles.inputInner}
-              placeholder = {'----------------'}
-              zIndex={101}
-              translation={{
-                NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-              }}
-              onClose={() => {setAuto_gmail(1)}}
+            > */}
+            <FlatList
+              style={{height:Platform.OS === "ios" ? 400 : 500}}
+              data={[(
+                <>
+                  {rrr()}
+                  <Text style={styles.label}>宛先</Text>
+                  <DropDownPicker
+                    open={open}
+                    value={cus_value}
+                    items={items1}
+                    setOpen={setOpen}
+                    setValue={setCus_Value}
+                    style={styles.inputInner}
+                    placeholder = {'----------------'}
+                    zIndex={101}
+                    translation={{
+                      NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                    }}
+                    onClose={() => {setAuto_gmail(1)}}
+                  />
+                  <Text style={styles.label}>送信元</Text>
+                  <DropDownPicker
+                    open={open2}
+                    value={shop_value}
+                    items={items2}
+                    setOpen={setOpen2}
+                    setValue={setShop_Value}
+                    style={styles.inputInner}
+                    placeholder={'----------------'}
+                    zIndex={100}
+                  />
+                  <View style={styles.input}>
+                    <Text style={styles.label}>件名</Text>
+                    <TextInput
+                      onChangeText={(text) => setMail_subject(text)}
+                      value={mail_subject}
+                      style={styles.inputInner}
+                    />
+                  </View>
+                  <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
+                    <TouchableOpacity onPress={pickDocument} style={styles.file}>
+                      <Text>ファイル添付</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={pickImage} style={styles.file}>
+                      <Text>画像添付</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
+                    <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
+                      <Feather name='x-circle' color='gray' size={25} />
+                    </TouchableOpacity>
+                    <Text>{filename}</Text>
+                  </View>
+                  <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text> 
+                  <View zIndex={99}>{mail_reservation()}</View>
+                  <View style={styles.input}>
+                    <Text style={styles.label}>内容詳細</Text>
+                    <TextInput
+                      onChangeText={(text) => {setNote(text)}}
+                      value={note}
+                      style={styles.textarea}
+                      multiline={true}
+                      disableFullscreenUI={true}
+                      numberOfLines={11}
+                    />
+                  </View>
+                  <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
+                    <TouchableOpacity onPress={onDraft} style={styles.draft}>
+                      <Text>下書き保存</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onSubmit} style={styles.submit}>
+                      <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )]}
+              renderItem={({ item }) => (
+                <>{item}</>
+              )}
             />
-            <Text style={styles.label}>送信元</Text>
-            <DropDownPicker
-              open={open2}
-              value={shop_value}
-              items={items2}
-              setOpen={setOpen2}
-              setValue={setShop_Value}
-              style={styles.inputInner}
-              placeholder={'----------------'}
-              zIndex={100}
-            />
-            <View style={styles.input}>
-              <Text style={styles.label}>件名</Text>
-              <TextInput
-                onChangeText={(text) => setMail_subject(text)}
-                value={mail_subject}
-                style={styles.inputInner}
-              />
-            </View>
-            <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
-              <TouchableOpacity onPress={pickDocument} style={styles.file}>
-                <Text>ファイル添付</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={pickImage} style={styles.file}>
-                <Text>画像添付</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
-              <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
-                <Feather name='x-circle' color='gray' size={25} />
-              </TouchableOpacity>
-              <Text>{filename}</Text>
-            </View>
-            <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text> 
-            <View zIndex={99}>{mail_reservation()}</View>
-            <View style={styles.input}>
-              <Text style={styles.label}>内容詳細</Text>
-              <TextInput
-                onChangeText={(text) => {setNote(text)}}
-                value={note}
-                style={styles.textarea}
-                multiline={true}
-                disableFullscreenUI={true}
-                numberOfLines={11}
-              />
-            </View>
-            <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
-              <TouchableOpacity onPress={onDraft} style={styles.draft}>
-                <Text>下書き保存</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onSubmit} style={styles.submit}>
-                <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
-              </TouchableOpacity>
-            </View>
-            </ScrollView>
+            {/* </ScrollView> */}
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -885,7 +895,7 @@ export function MyModal2(props){
   const onClose = () => {
     props.setModal2(false)
   }
- 
+  
   function action_date() {
     if (Platform.OS === 'ios') {
       return (
@@ -1177,7 +1187,7 @@ export function MyModal3(props){
       const regex = new RegExp(`${query.trim()}`, 'i');
       if(address) {
         setFilteredAddress(
-            address.filter((area) => area.name.search(regex) >= 0)
+          address.filter((area) => area.name.search(regex) >= 0)
         );
       }
     } else {
@@ -1478,11 +1488,11 @@ export function MyModal3(props){
             })
             .catch((error) => {
               const errorMsg = "検索に失敗しました";
-              console.log(error)
+              console.log(error);
               Alert.alert(errorMsg);
             })
-          }
-          
+      }
+      
     }, [search])
   
   const onDelete = () => {
@@ -1664,7 +1674,7 @@ export function MyModal3(props){
                             setFilteredStations([]);
                           }}>
                           <Text style={styles.suggestText}>
-                              {item.name}
+                            {item.name}
                           </Text>
                         </TouchableOpacity>,
                       }}
@@ -1990,9 +2000,11 @@ export function MyModal4(props){
     
     const l = fixed.map((f) => {
       if (category == f.category) {
-        return (<TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
-                <Text style={styles.CollapseBodyText}>{f.title}</Text>
-              </TouchableOpacity>)
+        return (
+          <TouchableOpacity onPress={() => tmp_send(f)} key={f.fixed_id}>
+            <Text style={styles.CollapseBodyText}>{f.title}</Text>
+          </TouchableOpacity>
+        )
       }
     })
     
@@ -2021,7 +2033,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       title = title.join(bukken);
     }else{
@@ -2056,7 +2068,7 @@ export function MyModal4(props){
       let bukken = '';
       for (let i = 0; i < hensu[6].length; i++) {
         bukken += hensu[6][i];
-        bukken += '\n'
+        bukken += '\n';
       }
       note = note.join(bukken);
     }else{
@@ -2134,29 +2146,29 @@ export function MyModal4(props){
           <Feather name='x-circle' color='gray' size={35} />
         </TouchableOpacity>
         <Text style={styles.templateText}>
-        定型文をクリックすると送信内容に反映されます。{"\n"}
-        先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。{"\n"}
-        ご注意ください。
+          定型文をクリックすると送信内容に反映されます。{"\n"}
+          先にテキストを入力している状態で、定型文を選択すると内容が上書きされます。{"\n"}
+          ご注意ください。
         </Text>
-          <FlatList 
-            data={fixed_category}
-            renderItem={({ item }) => 
-              (
-                <Collapse>
-                  <CollapseHeader>
-                    <View>
-                      <Text style={styles.CollapseHeader}>{item}</Text>
-                    </View>
-                  </CollapseHeader>
-                  <CollapseBody>
-                    <View>
-                      {list(item)}
-                    </View>
-                  </CollapseBody>
-                </Collapse>
-              )
-            }
-          />
+        <FlatList 
+          data={fixed_category}
+          renderItem={({ item }) => 
+            (
+              <Collapse>
+                <CollapseHeader>
+                  <View>
+                    <Text style={styles.CollapseHeader}>{item}</Text>
+                  </View>
+                </CollapseHeader>
+                <CollapseBody>
+                  <View>
+                    {list(item)}
+                  </View>
+                </CollapseBody>
+              </Collapse>
+            )
+          }
+        />
       </View>
     </Modal>
   );
@@ -2519,7 +2531,6 @@ export function MyModal6(props){
         setID(id_list_min);
         setCustomer_id(id_list);
         
-        
         const items = s.map((item) => {
           
           if (route.params.account == item[0]) {
@@ -2641,7 +2652,7 @@ export function MyModal6(props){
             }}
           />
           </>
-          )
+        )
       }
     }
   }
@@ -2706,7 +2717,7 @@ export function MyModal6(props){
       }
     })
     .catch((error) => {
-      console.log(error)
+      console.log(error);
       Alert.alert('失敗');
     })
     
