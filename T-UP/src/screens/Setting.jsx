@@ -794,9 +794,9 @@ function Delete_staff_db(){
           
           <Text style={styles.title}>個人ID 設定2</Text>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:999}:{}]}>
+          <View style={[styles.setting2,{zIndex:999}]}>
             <View style={{width:'70%'}}>
-              <View style={[{flexDirection:'row'},Platform.OS === 'ios'?{zIndex:999}:{}]}>
+              <View style={[{flexDirection:'row',zIndex:999,marginBottom:15}]}>
                 <Text style={styles.label2}>1.</Text>
                 <DropDownPicker
                   style={styles.dropDown}
@@ -829,9 +829,9 @@ function Delete_staff_db(){
             />
           </View>
           
-          <View style={[styles.setting2,Platform.OS === 'ios'?{zIndex:998}:{}]}>
+          <View style={[styles.setting2,{zIndex:998}]}>
             <View style={{width:'70%'}}>
-              <View style={[{flexDirection:'row'},Platform.OS === 'ios'?{zIndex:999}:{}]}>
+              <View style={[{flexDirection:'row',zIndex:999,marginBottom:15}]}>
                 <Text style={styles.label2}>2.</Text>
                 <DropDownPicker
                   style={styles.dropDown}
