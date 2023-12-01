@@ -15,18 +15,19 @@
     "@react-native-community/datetimepicker": "7.2.0",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/stack": "^6.3.20",
-    "@unimodules/core": "^7.1.2",
-    "@unimodules/react-native-adapter": "^6.3.9",
     "accordion-collapse-react-native": "^1.1.1",
     "axios": "^0.26.0",
     "deprecated-react-native-prop-types": "^5.0.0",
     "expo": "^49.0.0",
     "expo-asset": "~8.10.1",
+    "expo-build-properties": "~0.8.3",
     "expo-constants": "~14.4.2",
     "expo-device": "~5.4.0",
     "expo-document-picker": "~11.5.4",
     "expo-file-system": "~15.4.4",
     "expo-image-picker": "~14.3.2",
+    "expo-localization": "~14.3.0",
+    "expo-modules-core": "~1.5.12",
     "expo-notifications": "~0.20.1",
     "expo-permissions": "~14.2.1",
     "expo-sqlite": "~11.3.3",
@@ -65,9 +66,7 @@
     "react-native-version-check": "^3.4.7",
     "react-native-version-check-expo": "^3.4.7",
     "react-native-web": "~0.19.6",
-    "react-native-webview": "13.2.2",
-    "expo-camera": "~13.4.4",
-    "expo-av": "~13.4.1"
+    "react-native-webview": "13.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

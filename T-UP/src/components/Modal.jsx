@@ -15,14 +15,12 @@ import Autocomplete from 'react-native-autocomplete-input';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import RadioButtonRN from 'radio-buttons-react-native';
-import * as SQLite from "expo-sqlite";
-import * as Permissions from "expo-permissions";
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import ColorPicker from 'react-native-color-picker-ios-android';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // DB接続
-const db = SQLite.openDatabase("db");
+import { db } from './Databace';
 
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
@@ -347,27 +345,9 @@ export function MyModal1(props){
   const openTextColor = () => {
     setColor(!color);
   };
-  
+
   // オンライン通話
 	const openOnline_call = async (id) => {
-    
-	  // カメラのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA);
-      if (status !== 'granted') {
-        Alert.alert('カメラへのアクセスを許可してください');
-        return
-      }
-    }
-    
-    // マイクのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-      if (status !== 'granted') {
-        Alert.alert('マイクへのアクセスを許可してください');
-        return
-      }
-    }
     
     Alert.alert(
       "通話画面を開きますか？",
@@ -424,61 +404,71 @@ export function MyModal1(props){
 	const pickDocument = async () => {
     
     var result = await DocumentPicker.getDocumentAsync({});
-    
-    if (result) {
+    if (result.canceled != true) {
       
-      if(result.size > 7000000) {
+      if(result.assets[0].size > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
-        setFilename(result.name);
-        setFiledata(result);
+        setFilename(result.assets[0].name);
+        setFiledata(result.assets[0]);
       }
       
     }
   };
   
+  const LibraryPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `カメラロールへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false);}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false);
+            }
+          }
+        ]
+      );
+    });
+
+	  // カメラロールのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
   // 画像選択
 	const pickImage = async () => {
     
-    // カメラロールのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          `カメラロールへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
-    }
-    
+    if (!await LibraryPermissionsCheck()) return;
     
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
-    
-    if (result) {
-      if(result.size > 7000000) {
+    if (result.canceled != true) {
+      if(result.assets[0].fileSize > 7000000) {
         Alert.alert('添付ファイルのサイズは7MBまでにしてください');
       }else{
-        result.name = result.uri.split('/').pop()
-        setFilename(result.name);
-        setFiledata(result);
+        result.name = result.assets[0].uri.split('/').pop()
+        setFilename(result.assets[0].fileName);
+        setFiledata(result.assets[0]);
       }
       
     }

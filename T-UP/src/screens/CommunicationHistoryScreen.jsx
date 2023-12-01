@@ -902,9 +902,10 @@ export default function CommunicationHistoryScreen(props) {
           }
           initialNumToRender={10}
           data={memos}
-          renderItem={({ item }) => {
+          renderItem={({ item,index }) => {
             if (!item.del_flg) {
               return (
+              <>
                 <TouchableOpacity
                   style={styles.ListItem}
                   onPress={() => {
@@ -955,6 +956,16 @@ export default function CommunicationHistoryScreen(props) {
                     </Text>
                   </View>
                 </TouchableOpacity>
+                {/* {index==4&&(
+                  <BannerAd
+                    unitId={adUnitId}
+                    size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                    requestOptions={{
+                      requestNonPersonalizedAdsOnly: true,
+                    }}
+                  />
+                )} */}
+                </>
               );
             }
           }}

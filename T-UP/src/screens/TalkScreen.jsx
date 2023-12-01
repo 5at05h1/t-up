@@ -9,8 +9,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
 import * as Permissions from "expo-permissions";
 import GestureRecognizer from 'react-native-swipe-gestures';
-import { Camera } from 'expo-camera';
-import { Audio } from 'expo-av';
 
 import Loading from '../components/Loading';
 import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6} from '../components/Modal';
@@ -615,7 +613,7 @@ export default function TalkScreen(props) {
       newMessage[0].user.status = add[1];
       
       if(add[3][8]) {
-        var file_name = add[3][8].name;
+        var file_name = add[3][8].name?add[3][8].name:add[3][8].fileName;
         var match = /\.(\w+)$/.exec(file_name);
         var type = match ? `image/${match[1]}` : `image`;
       }
@@ -739,9 +737,9 @@ export default function TalkScreen(props) {
         quality: 1,
       });
       
-      if (!result.cancelled) {
+      if (!result.canceled) {
         
-        let filename = result.uri.split('/').pop();
+        let filename = result.assets[0].fileName;
   
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
@@ -753,16 +751,16 @@ export default function TalkScreen(props) {
         formData.append('act','get_talk');
         formData.append('LINE_flg',1);
         formData.append('formdata_flg',1);
-        formData.append('file', { uri: result.uri, name: filename, type });
+        formData.append('file', { uri: result.assets[0].uri, name: filename, type });
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        body: formData,
-        header: {
-          'content-type': 'multipart/form-data',
-        },
-      })
+        {
+          method: 'POST',
+          body: formData,
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+        })
         .then((response) => response.json())
         .then((json) => {
           setLoading(false);
@@ -771,7 +769,7 @@ export default function TalkScreen(props) {
               [{
                 _id:String(Number(messages[0]._id)+1),
                 text:'',
-                image:result.uri,
+                image:result.assets[0].uri,
                 createdAt: new Date(),
                 user:{
                   _id: 1,
@@ -808,7 +806,7 @@ export default function TalkScreen(props) {
       setLoading(true);
   	  if (result.canceled != true) {
         
-        let filename = result.assets[0].uri.split('/').pop();
+        let filename = result.assets[0].name;
   
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
@@ -821,7 +819,7 @@ export default function TalkScreen(props) {
         formData.append('LINE_flg',1);
         formData.append('file_flg',1);
         formData.append('formdata_flg',1);
-        formData.append('file', { uri: result.uri, name: filename, type });
+        formData.append('file', { uri: result.assets[0].uri, name: filename, type });
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
         {
@@ -869,90 +867,9 @@ export default function TalkScreen(props) {
       
     }
   };
-	
-  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
-
-  const CameraPermissionsCheck = async() => {
-
-    const AsyncAlert = async () => new Promise((resolve) => {
-      Alert.alert(
-        `カメラへのアクセスが無効になっています`,
-        "設定画面へ移動しますか？",
-        [
-          {
-            text: "キャンセル",
-            style: "cancel",
-            onPress:() => {resolve(false)}
-          },
-          {
-            text: "設定する",
-            onPress: () => {
-              Linking.openSettings();
-              resolve(false)
-            }
-          }
-        ]
-      );
-    });
-
-    const { status } = await c_requestPermission();
-    
-	  // カメラのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      if (status !== 'granted') {
-        await AsyncAlert();
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-  }
-
-  const [a_permissionResponse, a_requestPermission] = Audio.usePermissions();
-
-  const AudioPermissionsCheck = async() => {
-
-    const AsyncAlert = async () => new Promise((resolve) => {
-      Alert.alert(
-        `マイクへのアクセスが無効になっています`,
-        "設定画面へ移動しますか？",
-        [
-          {
-            text: "キャンセル",
-            style: "cancel",
-            onPress:() => {resolve(false)}
-          },
-          {
-            text: "設定する",
-            onPress: () => {
-              Linking.openSettings();
-              resolve(false)
-            }
-          }
-        ]
-      );
-    });
-
-    const { status } = await a_requestPermission();
-    
-	  // マイクのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      if (status !== 'granted') {
-        await AsyncAlert();
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-  }
 
 	// オンライン通話URL挿入
 	const online_call = async (id) => {
-	  
-	  if (!await CameraPermissionsCheck()) return;
-	  if (!await AudioPermissionsCheck()) return;
 	  
     Alert.alert(
       "通話画面を開きますか？",
