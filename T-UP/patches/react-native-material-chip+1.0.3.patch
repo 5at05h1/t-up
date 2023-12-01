@@ -1,0 +1,19 @@
+diff --git a/node_modules/react-native-material-chip/src/MaterialChip.js b/node_modules/react-native-material-chip/src/MaterialChip.js
+index c5bcf1e..e620edd 100644
+--- a/node_modules/react-native-material-chip/src/MaterialChip.js
++++ b/node_modules/react-native-material-chip/src/MaterialChip.js
+@@ -5,12 +5,13 @@ import {
+     StyleSheet,
+     Text,
+     TouchableOpacity,
+-    ViewPropTypes,
++    // ViewPropTypes,
+     TextPropTypes,
+     View
+ } from 'react-native'
+ import * as sizes from './sizes'
+ import PropTypes from 'prop-types'
++import {ViewPropTypes} from 'deprecated-react-native-prop-types';
+ 
+ const viewPropTypes = ViewPropTypes || View.propTypes
+ const textPropTypes = TextPropTypes || Text.propTypes

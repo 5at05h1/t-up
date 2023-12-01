@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-dropdown-picker/src/components/Picker.js b/node_modules/react-native-dropdown-picker/src/components/Picker.js
+index e3fb93b..f7e779d 100644
+--- a/node_modules/react-native-dropdown-picker/src/components/Picker.js
++++ b/node_modules/react-native-dropdown-picker/src/components/Picker.js
+@@ -14,16 +14,17 @@ import {
+     TouchableOpacity,
+     Text,
+     Image,
+-    FlatList,
++    // FlatList,
+     TextInput,
+     Dimensions,
+-    ScrollView,
++    // ScrollView,
+     Modal,
+     ActivityIndicator,
+     BackHandler,
+     Platform,
+     StyleSheet,
+ } from 'react-native';
++import { FlatList, ScrollView } from 'react-native-gesture-handler';
+ 
+ const { height: WINDOW_HEIGHT } = Dimensions.get('window');
+ 
+@@ -607,7 +608,7 @@ function Picker({
+                     mtext = mtext[item.length] ?? mtext.n;
+                 }
+                 
+-                return mtext.replace('{count}', item.length);
++                return mtext.replace('{count}', item);
+             } else
+                 return fallback;
+ 

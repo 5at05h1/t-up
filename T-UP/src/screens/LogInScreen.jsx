@@ -6,19 +6,13 @@ import { FloatingLabelInput } from 'react-native-floating-label-input';
 import { Feather } from '@expo/vector-icons';
 import Toast from 'react-native-root-toast';
 import VersionCheck from 'react-native-version-check-expo';
-
-LogBox.ignoreLogs([
-  "exported from 'deprecated-react-native-prop-types'.",
-])
-
-// oishi 端末token取得用追加
-import Constants from 'expo-constants';
+import * as SQLite from "expo-sqlite";
 import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 import Loading from '../components/Loading';
-import * as SQLite from "expo-sqlite";
-import CreateDB from '../components/Databace';
-import GetDB from '../components/Get_databace';
+import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
 
 // DB接続
 const db = SQLite.openDatabase("db");
@@ -40,9 +34,6 @@ let domain = 'https://www.t-up.systems/';
 
 export default function LogInScreen(props) {
   
-  // アプリの最新バージョンを取得する実装
-  const latestAppVersion = '2.2.8';
-  
   // 現在利用しているアプリのバージョンを取得する
   const appVersion = VersionCheck.getCurrentVersion();
   
@@ -62,14 +53,14 @@ export default function LogInScreen(props) {
   
   const [rocalDB,setRocalDB] = useState([]);
   
-  const[ExpoPushToken,setExpoPushToken] = useState(false);
+  const[ExpoPushToken,setExpoPushToken] = useState(null);
   const [notification, setNotification] = useState(false);
   const notificationListener = useRef();
   const responseListener = useRef();
   
   useEffect(() => {
     
-    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+    registerForPushNotificationsAsync();
     
     // メッセージ受信時
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
@@ -93,46 +84,62 @@ export default function LogInScreen(props) {
       }
     })
     
-    // 新しいバージョンのアプリがストアに配布されている場合は更新を促す
-    if (appVersion != latestAppVersion) {
+    fetch(domain+'js/appversion.json')
+    .then((response) => response.json())
+    .then((json) => {
+
+      var latestAppVersion = json.version;
       
-      Alert.alert("更新情報", "新しいバージョンが利用可能です。最新版にアップデートしてご利用ください。", [
-        { text: "後で通知", style: "cancel" },
-        { text: "アップデート", onPress: () => {
-          if (Platform.OS === "ios") {
-            const appId = 1606133167; // AppStoreのURLから確認できるアプリ固有の数値
-            const itunesURLScheme = `itms-apps://itunes.apple.com/jp/app/id${appId}?mt=8`;
-            const itunesURL = `https://itunes.apple.com/jp/app/id${appId}?mt=8`;
+      // 新しいバージョンのアプリがストアに配布されている場合は更新を促す
+      if (appVersion < latestAppVersion) {
         
-            Linking.canOpenURL(itunesURLScheme).then(supported => {
-              // AppStoreアプリが開ける場合はAppStoreアプリで開く。開けない場合はブラウザで開く。
-              if (supported) {
-                Linking.openURL(itunesURLScheme);
-              } else {
-                Linking.openURL(itunesURL);
-              }
-            });
-          } else {
-            const appId = "com.TUP_CRM"; // PlayストアのURLから確認できるid=?の部分
-            const playStoreURLScheme = `market://details?id=${appId}`;
-            const playStoreURL = `https://play.google.com/store/apps/details?id=${appId}`;
+        Alert.alert("更新情報", "新しいバージョンが利用可能です。最新版にアップデートしてご利用ください。", [
+          { text: "後で通知", style: "cancel" },
+          { text: "アップデート", onPress: () => {
+            if (Platform.OS === "ios") {
+              const appId = 1606133167; // AppStoreのURLから確認できるアプリ固有の数値
+              const itunesURLScheme = `itms-apps://itunes.apple.com/jp/app/id${appId}?mt=8`;
+              const itunesURL = `https://itunes.apple.com/jp/app/id${appId}?mt=8`;
+          
+              Linking.canOpenURL(itunesURLScheme).then(supported => {
+                // AppStoreアプリが開ける場合はAppStoreアプリで開く。開けない場合はブラウザで開く。
+                if (supported) {
+                  Linking.openURL(itunesURLScheme);
+                } else {
+                  Linking.openURL(itunesURL);
+                }
+              });
+            } else {
+              const appId = "com.TUP_CRM"; // PlayストアのURLから確認できるid=?の部分
+              const playStoreURLScheme = `market://details?id=${appId}`;
+              const playStoreURL = `https://play.google.com/store/apps/details?id=${appId}`;
+          
+              Linking.canOpenURL(playStoreURLScheme).then(supported => {
+                // Playストアアプリが開ける場合はPlayストアアプリで開く。開けない場合はブラウザで開く。
+                if (supported) {
+                  Linking.openURL(playStoreURLScheme);
+                } else {
+                  Linking.openURL(playStoreURL);
+                }
+              });
+            }
+          }}
+        ]);
         
-            Linking.canOpenURL(playStoreURLScheme).then(supported => {
-              // Playストアアプリが開ける場合はPlayストアアプリで開く。開けない場合はブラウザで開く。
-              if (supported) {
-                Linking.openURL(playStoreURLScheme);
-              } else {
-                Linking.openURL(playStoreURL);
-              }
-            });
-          }
-        }}
-      ]);
-      
-    }
+      }
+    })
+    .catch((error) => {
+      console.log('バージョン取得失敗');
+      console.log(error);
+    })
     
     // ローカルDBでログイン(同期処理)
     const execute = async() => {
+
+      console.log('--------------------------------')
+
+      setLoading(true);
+
       const toast = (text) => Toast.show(text, {
         duration: Toast.durations.LONG,
         position: 0,
@@ -144,46 +151,81 @@ export default function LogInScreen(props) {
       
       // 駅・沿線
       const set_station = async() => {
-        await GetDB(station,'station_mst');
+        var station_ = await db_select(`select count(*) as cnt from station_mst;`);
+        var cnt = station_[0]["cnt"];
         
-        if (station.length == 0) {
+        if (cnt == 0) {
+          function getStation(){
+            return new Promise((resolve, reject)=>{
+              fetch(domain+'js/data/reins.json')
+              .then((response) => response.json())
+              .then((json) => {
+                resolve(json);
+              })
+              .catch((error) => {
+                console.log('駅・沿線取得失敗');
+                console.log(error);
+                resolve(false);
+              })
+            })
+          }
           toast('データベース更新中\n少々お待ちください');
-          fetch(domain+'js/data/reins.json')
-          .then((response) => response.json())
-          .then((json) => {
-            Insert_station_db(json);
-          })
-          .catch((error) => {
-            const errorMsg = "失敗駅・沿線";
-            Alert.alert(errorMsg);
-          })
+          const GS = await getStation();
+          if (GS) await Insert_station_db(GS);
+        } else {
+          setStation(true);
         }
       }
       
       // エリア
       const set_area = async() => {
-        
-        await GetDB(address,'address_mst');
-        if (address.length == 0) {
-          
-          fetch(domain+'js/data/address.json')
-          .then((response) => response.json())
-          .then((json) => {
-            Insert_area_db(json)
-          })
-          .catch((error) => {
-            const errorMsg = "失敗エリア";
-            Alert.alert(errorMsg);
-          })
+        var address_ = await db_select(`select count(*) as cnt from address_mst;`);
+        var cnt = address_[0]["cnt"];
+
+        if (cnt == 0) {
+          function getAddress(){
+            return new Promise((resolve, reject)=>{
+              fetch(domain+'js/data/address.json')
+              .then((response) => response.json())
+              .then((json) => {
+                resolve(json);
+              })
+              .catch((error) => {
+                console.log('エリア取得失敗');
+                console.log(error);
+                resolve(false);
+              })
+            })
+          }
+
+          const GA = await getAddress();
+          if (GA) await Insert_area_db(GA);
+        } else {
+          setAddress(true);
         }
       }
       
       await CreateDB();
       await set_station();
       await set_area();
-      Toast.hide(toast);
-      await GetDB(rocalDB,'staff_mst');
       
+      // ※ログイン制御の為、最後に処理
+      const staff_mst = await GetDB('staff_mst');
+      if (staff_mst != false) {
+        
+        let toast = Toast.show('自動ログインしています', {
+          duration: Toast.durations.SHORT,
+          position: 200,
+          shadow: true,
+          animation: true,
+          backgroundColor:'#333333',
+        });
+
+        setRocalDB(staff_mst);
+      }
+      
+      setLoading(false);
+
     }
     execute();
     
@@ -192,52 +234,56 @@ export default function LogInScreen(props) {
   // 取得したトークンで自動ログイン
   useEffect(() => {
     
-    if (rocalDB.length != 0) {
-      let toast = Toast.show('自動ログインしています', {
-        duration: Toast.durations.SHORT,
-        position: 200,
-        shadow: true,
-        animation: true,
-        backgroundColor:'#333333',
-      });
-      // websocket通信
-      const WS_URL = 'ws://52.194.19.123:8080/ws/'+rocalDB[0].shop_id+'/'
-      
-      // ログインデータ保持用
-      global.sp_id = rocalDB.account;
-      setLoading(false);
+    if (station && address) {
+      if (rocalDB.length != 0) {
 
-      // ローカルサーバーのデータを更新(サーバーから取得)
-      getServerData(rocalDB[0]);
-      
-      navigation.reset({
-        index: 0,
-        routes: [{
-          name: 'CommunicationHistory',
-          params: rocalDB[0],
-          websocket:new WebSocket(WS_URL),
-          station:station,
-          address:address,
-          flg:'ローカル',
-          previous:'LogIn',
-          notifications:cus_notifications?cus_notifications:null,
-        }],
-      });
-    } else if (rocalDB.length == 0) {
-      fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        // PHPに送るデータ
-        body: JSON.stringify({
-          sp_token : ExpoPushToken,
+        let toast = Toast.show('自動ログインしています', {
+          duration: Toast.durations.SHORT,
+          position: 200,
+          shadow: true,
+          animation: true,
+          backgroundColor:'#333333',
+        });
+
+        // websocket通信
+        const WS_URL = 'ws://52.194.19.123:8080/ws/'+rocalDB[0].shop_id+'/'
+        
+        // ログインデータ保持用
+        global.sp_id = rocalDB.account;
+        setLoading(false);
+
+        // ローカルサーバーのデータを更新(サーバーから取得)
+        getServerData(rocalDB[0]);
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'CommunicationHistory',
+            params: rocalDB[0],
+            websocket:new WebSocket(WS_URL),
+            station:station,
+            address:address,
+            flg:'ローカル',
+            previous:'LogIn',
+            notifications:cus_notifications?cus_notifications:null,
+          }],
+        });
+
+      } else if (rocalDB.length == 0 && ExpoPushToken) {
+        
+        fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: JSON.stringify({
+            sp_token : ExpoPushToken,
+          })
         })
-      })
         .then((response) => response.json())
-        .then((json) => {
+        .then(async(json) => {
           
           let toast = Toast.show('自動ログインしています', {
             duration: Toast.durations.SHORT,
@@ -282,7 +328,7 @@ export default function LogInScreen(props) {
             staff.setting_list7_mail,
           ];
           
-          Insert_staff_db(staff.account,staff.password,staff_data);
+          await Insert_staff_db(staff.account,staff.password,staff_data);
           
           navigation.reset({
             index: 0,
@@ -299,56 +345,30 @@ export default function LogInScreen(props) {
           });
       
         })
+        .catch((error) => {
+          console.log('トークンログイン失敗');
+          console.log(error);
+        })
+      }
     }
     
-  }, [station,address]);
+  }, [station,address,rocalDB]);
   
-  function Insert_staff_db(account,pass,data){
-    db.transaction((tx) => {
-      
-      tx.executeSql(
-        `select * from staff_mst where (account = ? and password = ?);`,
-        [account,pass],
-        (_, { rows }) => {
+  async function Insert_staff_db(account,pass,data){
 
-          if (!rows._array.length) {
-            tx.executeSql(
-              `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-              data,
-              () => {console.log("insert staff_mst");},
-              () => {console.log("staff_mst 失敗");}
-            );
-          } else {
-            // console.log("localDB staff OK");
-          }
-        },
-        () => {console.log("失敗");}
-      );
-      
-    });
+    var sql = `select * from staff_mst where (account = '${account}' and password = '${pass}');`;
+    var staff_mst = await db_select(sql);
+
+    if (staff_mst == false) {
+      var insert_staff = `insert into staff_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+      await db_write(insert_staff,data);
+    }
   
-  }
-  
-  // テーブルを空にする
-  function delete_db(){
-    
-    new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-        // スタッフ
-        tx.executeSql(
-          `delete from staff_mst;`,
-          [],
-          () => {console.log("staff_mst [delete]テーブル削除");},
-          () => {console.log("staff_mst [delete]テーブル削除失敗");}
-        );
-        resolve();
-      })
-    });
   }
   
   // サーバーからのデータを取得して、ローカルサーバーの中身を更新
   function getServerData(staff){
-    // 
+
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
       method: 'POST',
@@ -356,158 +376,111 @@ export default function LogInScreen(props) {
         Accept: 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      // PHPに送るデータ
       body: JSON.stringify({
         ID : staff.account,
         pass : staff.password
       })
     })
-      .then((response) => response.json())
-      .then((json) => {
-        
-        const staff = json.staff;
-        
-        // ログインデータ保持用
-        global.sp_id = staff.account;
-        
-        // テーブルの中身を空にする
-        delete_db();
-        
-        // スタッフ情報をサーバーから取得
-        const staff_data = [
-          staff.account,
-          staff.password,
-          staff.shop_id,
-          staff.name_1,
-          staff.name_2,
-          staff.name,
-          staff.corporations_name,
-          staff.setting_list,
-          staff.app_token,
-          staff.system_mail,
-          staff.yahoomail,
-          staff.gmail,
-          staff.hotmail,
-          staff.outlook,
-          staff.softbank,
-          staff.icloud,
-          staff.original_mail,
-          staff.line_id,
-          staff.mail_name,
-          staff.mail1,
-          staff.mail2,
-          staff.mail3,
-          staff.top_staff_list,
-          staff.setting_list7_mail,
-        ];
-        
-        Insert_staff_db(staff.account,staff.password,staff_data);
+    .then((response) => response.json())
+    .then(async(json) => {
+      
+      const staff = json.staff;
+      
+      // ログインデータ保持用
+      global.sp_id = staff.account;
+      
+      // テーブルを空にする
+      await db_write(`delete from staff_mst;`,[]);     // スタッフ
+      
+      // スタッフ情報をサーバーから取得
+      const staff_data = [
+        staff.account,
+        staff.password,
+        staff.shop_id,
+        staff.name_1,
+        staff.name_2,
+        staff.name,
+        staff.corporations_name,
+        staff.setting_list,
+        staff.app_token,
+        staff.system_mail,
+        staff.yahoomail,
+        staff.gmail,
+        staff.hotmail,
+        staff.outlook,
+        staff.softbank,
+        staff.icloud,
+        staff.original_mail,
+        staff.line_id,
+        staff.mail_name,
+        staff.mail1,
+        staff.mail2,
+        staff.mail3,
+        staff.top_staff_list,
+        staff.setting_list7_mail,
+      ];
+      
+      await Insert_staff_db(staff.account,staff.password,staff_data);
 
-      })
-      .catch((error) => {
-        const errorMsg = "[※]自動ログインに失敗しました。";
-        Alert.alert(errorMsg);
-        console.log(error);
-      })
+    })
+    .catch((error) => {
+      const errorMsg = "[※]自動ログインに失敗しました。";
+      Alert.alert(errorMsg);
+      console.log(error);
+    })
     
   }
   
   // 駅・沿線データベース登録
-  function Insert_station_db(station){
-    return new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-        
-        tx.executeSql(
-          `select * from station_mst;`,
-          [],
-          (_, { rows }) => {
-            
-            setLoading(true)
-            if (!rows._array.length) {
-              
-              db.transaction((tx) => {
-                Promise.all(station.map((s) => {
-                  tx.executeSql(
-                    `insert into station_mst values (?,?);`,
-                    [s.id,s.name],
-                    () => {
-                      // console.log("insert station_mst");
-                    },
-                    () => {console.log("station_mst 失敗");}
-                  );
-                })).then(() => {
-                  tx.executeSql(
-                    `select * from station_mst;`,
-                    [],
-                    (_, { rows }) => {setStation(rows._array);}
-                  );
-                });
-              })
-              
-            }
-            
-            if (rows._array.length) {
-              setStation(rows._array);
-            }
-          },
-          () => {console.log("失敗b");}
-        );
-        
-      });
-      resolve();
-    });
+  async function Insert_station_db(station){
+
+    var sql = `select * from station_mst;`;
+    var station_mst = await db_select(sql);
+
+    if (station_mst == false) {
+      var insert_station = `insert into station_mst values `;
+      for (var s=0;s<station.length;s++) {
+        insert_station += `('${station[s]["id"]}','${station[s]["name"]}'),`;
+      }
+      insert_station = insert_station.substring(0, insert_station.length-1); // 最後のコンマ消す
+      await db_write(insert_station,[]);
+    }
+
   }
   
   // エリアデータベース登録
-  function Insert_area_db(address){
-    return new Promise((resolve, reject)=>{
-      db.transaction((tx) => {
-        tx.executeSql(
-          `select * from address_mst;`,
-          [],
-          (_, { rows }) => {
-            setLoading(true)
-            if (!rows._array.length) {
-              
-              db.transaction((tx) => {
-                Promise.all(address.map((a) => {
-                  tx.executeSql(
-                    `insert into address_mst values (?,?);`,
-                    [a.id,a.name],
-                    () => {
-                      // console.log("insert address_mst");
-                    },
-                    () => {console.log("address_mst 失敗");}
-                  );
-                })).then(() => {
-                  tx.executeSql(
-                    `select * from address_mst;`,
-                    [],
-                    (_, { rows }) => {setAddress(rows._array);}
-                  );
-                  setLoading(false)
-                });
-              })
-            }
-            
-            if (rows._array.length) {
-              setAddress(rows._array);
-              resolve(setLoading(false));
-              
-            }
-          },
-          () => {console.log("失敗");}
-        );
-        
-      });
-      resolve();
-    });
+  async function Insert_area_db(address){
+
+    var sql = `select * from address_mst;`;
+    var address_mst = await db_select(sql);
+
+    if (address_mst == false) {
+      var insert_address = `insert into address_mst values `;
+      for (var a=0;a<address.length;a++) {
+        insert_address += `('${address[a]["id"]}','${address[a]["name"]}'),`;
+      }
+      insert_address = insert_address.substring(0, insert_address.length-1); // 最後のコンマ消す
+      await db_write(insert_address,[]);
+    }
   }
   
   // ログイン
   function onSubmit(){
     
     setLoading(false);
+
+    if (!id && !password) {
+      Alert.alert('IDとパスワードを入力してください');
+      return
+    }
+    if (!id) {
+      Alert.alert('IDを入力してください');
+      return
+    } else if (!password) {
+      Alert.alert('パスワードを入力してください');
+      return
+    }
+
     fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
     {
       method: 'POST',
@@ -515,91 +488,113 @@ export default function LogInScreen(props) {
         Accept: 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      // PHPに送るデータ
       body: JSON.stringify({
         ID : id,
         pass : password
       })
     })
-      .then((response) => response.json())
-      .then((json) => {
-        
-        // ログインデータ保持用
-        global.sp_id = id;
+    .then((response) => response.json())
+    .then(async(json) => {
+      
+      // ログインデータ保持用
+      global.sp_id = id;
 
-        // トークン取得＆登録
-        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
-        
-        // websocket通信
-        const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/';
-        
-        const staff = json.staff;
-        
-        const staff_data = [
-          staff.account,
-          staff.password,
-          staff.shop_id,
-          staff.name_1,
-          staff.name_2,
-          staff.name,
-          staff.corporations_name,
-          staff.setting_list,
-          staff.app_token,
-          staff.system_mail,
-          staff.yahoomail,
-          staff.gmail,
-          staff.hotmail,
-          staff.outlook,
-          staff.softbank,
-          staff.icloud,
-          staff.original_mail,
-          staff.line_id,
-          staff.mail_name,
-          staff.mail1,
-          staff.mail2,
-          staff.mail3,
-          staff.top_staff_list,
-          staff.setting_list7_mail,
-        ];
-        
-        Insert_staff_db(staff.account,staff.password,staff_data);
-        
-        navigation.reset({
-          index: 0,
-          routes: [{
-            name: 'CommunicationHistory',
-            params: json.staff,
-            websocket:new WebSocket(WS_URL),
-            station:station,
-            address:address,
-            flg:'入力',
-            previous:'LogIn'
-          }],
-        });
-        
-      })
-      .catch((error) => {
-        const errorMsg = "IDまたはパスワードが違います";
-        Alert.alert(errorMsg);
-        console.log(error);
-      })
+      // トークン取得＆登録
+      registerForPushNotificationsAsync();
+      
+      // websocket通信
+      const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/';
+      
+      const staff = json.staff;
+      
+      const staff_data = [
+        staff.account,
+        staff.password,
+        staff.shop_id,
+        staff.name_1,
+        staff.name_2,
+        staff.name,
+        staff.corporations_name,
+        staff.setting_list,
+        staff.app_token,
+        staff.system_mail,
+        staff.yahoomail,
+        staff.gmail,
+        staff.hotmail,
+        staff.outlook,
+        staff.softbank,
+        staff.icloud,
+        staff.original_mail,
+        staff.line_id,
+        staff.mail_name,
+        staff.mail1,
+        staff.mail2,
+        staff.mail3,
+        staff.top_staff_list,
+        staff.setting_list7_mail,
+      ];
+      
+      await Insert_staff_db(staff.account,staff.password,staff_data);
+      
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'CommunicationHistory',
+          params: json.staff,
+          websocket:new WebSocket(WS_URL),
+          station:station,
+          address:address,
+          flg:'入力',
+          previous:'LogIn'
+        }],
+      });
+      
+    })
+    .catch((error) => {
+      const errorMsg = "IDまたはパスワードが違います";
+      Alert.alert(errorMsg);
+      console.log(error);
+    })
   };
 
 
 // 20210826 端末トークン取得用(DBに端末情報保存)
 async function registerForPushNotificationsAsync() {
+
   let token;
-  let experienceId = undefined;
   
-  if (Constants.isDevice) {
+  if (Platform.OS === 'ios') {
+    const { status } = await requestTrackingPermissionsAsync();
+  }
+
+  if (Device.isDevice) {
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
+    
     if (finalStatus !== 'granted') {
-      alert('この端末では、プッシュ通知が機能しません。');
+      Alert.alert(
+        `プッシュ通知が無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {return}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openURL("app-settings:");
+            }
+          }
+        ]
+      );
       return;
     }
     
@@ -609,8 +604,6 @@ async function registerForPushNotificationsAsync() {
     // グローバル変数にトークンを格納
     global.sp_token = token;
     
-    // トークン保存
-    //alert("check1");
     // グローバル変数に、tokenとログインIDがある場合
     if(global.sp_token && global.sp_id){
       
@@ -625,11 +618,17 @@ async function registerForPushNotificationsAsync() {
           token: global.sp_token
         }),
       })
+      .catch((error) => {
+        console.log('トークン登録失敗')
+        console.log(error);
+      })
     }
 
   } else {
     alert('この端末では、プッシュ通知が機能しません。');
   }
+
+  setExpoPushToken(token);
 
   return token;
 }

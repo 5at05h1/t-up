@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect,useCallback } from 'react';
 import {
   Platform, StyleSheet, View, Text, Alert, Keyboard, TouchableOpacity, TextInput, Linking, LogBox, BackHandler, AppState
 } from 'react-native';
@@ -9,16 +9,13 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
 import * as Permissions from "expo-permissions";
 import GestureRecognizer from 'react-native-swipe-gestures';
+import { Camera } from 'expo-camera';
+import { Audio } from 'expo-av';
 
 import Loading from '../components/Loading';
 import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6} from '../components/Modal';
 
-import * as SQLite from "expo-sqlite";
-
-// DB接続
-const db = SQLite.openDatabase("db");
-
-import axios from 'axios';
+import { GetDB,db_select,db_write } from '../components/Databace';
 
 LogBox.ignoreAllLogs()
 // let domain = 'http://test.t-up.systems/';
@@ -39,8 +36,9 @@ export default function TalkScreen(props) {
   const [messages, setMessages] = useState([]);
   const [customer, setCustomer] = useState(false);
   const [staff, setStaff] = useState([]);
+  const [tantou,setTantou] = useState(false);
   const [options, setOptions] = useState(false);
-  const [options2, setOptions2] = useState(false);
+  const [video_option, setVideo_option] = useState(false);
   const [overlap, setOverlap] = useState(false);
   
   const [menu, setMenu] = useState(false);
@@ -64,8 +62,10 @@ export default function TalkScreen(props) {
   const [chatbot,setChatbot] = useState(false);
   const [inquiry,setInquiry] = useState(false);
   const [inquiry_text,setInquiry_text] = useState(false);
-  
-  const [tantou,setTantou] = useState(false);
+
+  const [station,setStation] = useState([]);
+  const [address,setAddress] = useState([]);
+  const [fixed, setFixed] = useState([]);
   
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
@@ -86,8 +86,6 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    station:route.station,
-                    address:route.address,
                     previous:'TalkScreen'
                   }],
                 });
@@ -105,8 +103,6 @@ export default function TalkScreen(props) {
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
             previous:'TalkScreen'
           }],
         });
@@ -141,8 +137,6 @@ export default function TalkScreen(props) {
                             name: 'CommunicationHistory' ,
                             params: route.params,
                             websocket:route.websocket,
-                            station:route.station,
-                            address:route.address,
                             previous:'TalkScreen'
                           }],
                         });
@@ -160,8 +154,6 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    station:route.station,
-                    address:route.address,
                     previous:'TalkScreen'
                   }],
                 });
@@ -183,98 +175,109 @@ export default function TalkScreen(props) {
   
   useEffect(() => {
     
-    setLoading(true);
-    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: JSON.stringify({
-        ID : route.params.account,
-        pass : route.params.password,
-        act:'get_talk',
-        customer_id:route.customer,
-      })
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setTalk(json['communication']);
-        setCustomer(json['customer_data']);
-        setStaff(json['staff']);
-        setReservation(json['customer_reservation']);
-        setProperty(json['article_list']);
-        setConditions_date(json['conditions_date']);
-        setChatbot(json['chatbot_array']);
-        setInquiry(json['inquiry']);
-        setOptions(json['staff'].option_list.includes('14'));
-        setOptions2(json['staff'].option_list.split(","));
-        setOverlap(json['overlap']);
-        setLoading(false);
-        
-        // 登録用に一つ一つ配列化
-        const communication_mst = [];
-        
-        // ローカルDB用コミュニケーション履歴
-        const t = json['communication'];
+    onRefresh(true);
+    GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
+    GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
+    GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
 
-        for (let i = 0; i < 20; i++) {
-          
-          if (!t[i]) {
-            break
-          }
-          
-          communication_mst.unshift({
-            communication_id: t[i].communication_id,
-            customer_id: t[i].customer_id,
-            speaker: t[i].speaker,
-            time: t[i].time,
-            title: t[i].title,
-            note: t[i].note,
-            line_note: t[i].line_note,
-            file_path: t[i].file_path,
-            status: t[i].status,
-            del_flg:t[i].del_flg,
-            html_flg:t[i].html_flg
-          });
-          
-        }
-        
-        Insert_communication_db(communication_mst)
-        
-      })
-      .catch((error) => {
-        setLoading(false);
-        
-        db.transaction((tx) => {
-          tx.executeSql(
-            `select * from communication_mst where ( customer_id = ? ) order by time desc;`,
-            // `delete from communication_mst;`,
-            [route.customer],
-            (_, { rows }) => {
-              setTalk(rows._array)
-              const talk_count = rows._array.length;
-              
-              const errTitle = 'ネットワークの接続に失敗しました';
-              const errMsg = '直近の'+talk_count+'件のメッセージのみ表示します\n※送受信やおすすめ物件、画像の表示などはできません'
-              Alert.alert(errTitle,errMsg);
-              
-            },
-            () => {
-              console.log("失敗");
-            }
-          );
-          
-        });
-        
-      })
-  
   }, [])
   
-  // 更新
-  const [refreshing, setRefreshing] = useState(false);
-  
+  const onRefresh = useCallback(async(flg) => {
+
+    console.log('--------------------------');
+
+    if (flg) setLoading(true);
+
+    const startTime = Date.now(); // 開始時間
+
+    const json = await getCOM();
+
+    // ログアウトしてたら中断
+    if(!global.sp_token && !global.sp_id) return;
+
+    if (json != false) {
+      
+      setTalk(json['communication']);
+      setCustomer(json['customer_data']);
+      setStaff(json['staff']);
+      setReservation(json['customer_reservation']);
+      setProperty(json['article_list']);
+      setConditions_date(json['conditions_date']);
+      setInquiry(json['inquiry']);
+      setOptions(json['staff'].option_list.split(","));
+      setOverlap(json['overlap']);
+
+      // 店舗オプション（ビデオ通話）
+      if ((json['staff'].option_list.split(",")).includes('14')) {
+        setVideo_option(true);
+      }
+
+      // 重複チェック
+      if (json['overlap']) {
+        if(json['overlap'].overlap == '1' || json['overlap'].overlap == '2' || json['overlap'].overlap == '3') {
+          setModal6(true);
+        }
+      }
+
+      setLoading(false);
+
+      const endTime = Date.now(); // 終了時間
+      const time = (endTime - startTime)/1000;
+      console.log('トーク取得：'+time + '秒')
+
+      await Insert_communication_db(json['communication']);
+
+      const endTime2 = Date.now(); // 終了時間
+      const time2 = (endTime2 - startTime)/1000;
+      console.log('トーク登録：'+time2 + '秒')
+
+    } else {
+
+      var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
+      var talk_ = await db_select(sql);
+
+      setTalk(talk_);
+      
+      const errTitle = 'ネットワークの接続に失敗しました';
+      const errMsg = '直近の'+talk_.length+'件のメッセージのみ表示します\n※送受信やおすすめ物件、画像の表示などはできません'
+      Alert.alert(errTitle,errMsg);
+
+      setLoading(false);
+    }
+
+    return;
+
+  }, []);
+
+  const getCOM = useCallback(() => {
+    
+    return new Promise((resolve, reject)=>{
+      fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: JSON.stringify({
+          ID : route.params.account,
+          pass : route.params.password,
+          act:'get_talk',
+          customer_id:route.customer,
+        })
+      })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(error);
+        resolve(false);
+      });
+    })
+
+  });
+
   // websocket通信(繋がった)
   route.websocket.onopen = (open) => {
     console.log('open');
@@ -283,39 +286,7 @@ export default function TalkScreen(props) {
   // websocket通信(メール届いたら更新)
   route.websocket.onmessage = (message) => {
     let catchmail_flg = JSON.parse( message.data );
-    console.log(catchmail_flg.message)
-    
-    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: JSON.stringify({
-        ID : route.params.account,
-        pass : route.params.password,
-        act:'get_talk',
-        customer_id:route.customer,
-      })
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setTalk(json['communication']);
-        setCustomer(json['customer_data']);
-        setStaff(json['staff']);
-        setReservation(json['customer_reservation']);
-        setProperty(json['article_list']);
-        setConditions_date(json['conditions_date']);
-        setChatbot(json['chatbot_array']);
-        setInquiry(json['inquiry']);
-        setOptions(json['staff'].option_list.includes('14'));
-        setOptions2(json['staff'].option_list.split(","));
-      })
-      .catch((error) => {
-        const errorMsg = "更新に失敗しました";
-        Alert.alert(errorMsg);
-      })
+    onRefresh(false);
   }
   
   // websocket通信(切断したら再接続)
@@ -331,27 +302,11 @@ export default function TalkScreen(props) {
           params: route.params ,
           customer:route.customer,
           websocket:new WebSocket(WS_URL),
-          station:route.station,
-          address:route.address,
         }],
       });
     }
     
   }
-  
-  useEffect(() => {
-    
-    // 重複まとめ
-    if (overlap) {
-      if(overlap.overlap == '1' || overlap.overlap == '2' || overlap.overlap == '3') {
-        
-        if (customer) {
-          setModal6(true);
-        }
-      }
-    }
-    
-  }, [overlap])
   
   useEffect(() => {
     // 担当者割り振り
@@ -474,7 +429,7 @@ export default function TalkScreen(props) {
               maxWidth: '75%',
             },
             left: {
-              backgroundColor: (stamp==='スタンプ'||image!==''?'transparent':'#1f2d53'),
+              backgroundColor: (stamp==='スタンプ'?'transparent':'#1f2d53'),
               marginLeft: 5,
               marginVertical: 5,
               borderBottomLeftRadius: 1,
@@ -487,138 +442,67 @@ export default function TalkScreen(props) {
   };
   
   // コミュニケーション履歴データベース登録
-  function Insert_communication_db(communication){
-    
-    db.transaction((tx) => {
+  async function Insert_communication_db(communication){
+
+    if (communication) {
       
-      tx.executeSql(
-        `select * from communication_mst where (customer_id = ?);`,
-        [communication[0].customer_id],
-        (_, { rows }) => {
-          
-          const rocal = rows._array;
-          
-          if (!rows._array.length) {
-            
-            db.transaction((tx) => {
-              communication.map((c) => {
-                
-                if (!c.del_flg) {
-                  tx.executeSql(
-                    `insert into communication_mst values (?,?,?,?,?,?,?,?,?,?);`,
-                    [c.communication_id,c.customer_id,c.speaker,c.time,c.title,c.note,c.line_note,c.file_path,c.status,c.html_flg],
-                    () => {
-                      // console.log("insert staff_list");
-                    },
-                    () => {console.log("staff_list 失敗");}
-                  );
-                }
-                
-              });
-            })
-            
-          }
-          
-          // del_flgデータ削除 + 新しいコミュニケーション履歴追加
-          if (rows._array.length) {
-            
-            db.transaction((tx) => {
-              
-              communication.map((c) => {
-                
-                rocal.map((r) => {
-                  if (c.del_flg) {
-                    if (c.communication_id === r.communication_id && c.customer_id === r.customer_id) {
-                      db.transaction((tx) => {
-                        // del_flg消す
-                        tx.executeSql(
-                          `delete from communication_mst where (communication_id = ? and customer_id = ?);`,
-                          [r.communication_id,r.customer_id],
-                          (_, { rows }) => {
-                            // console.log(r.communication_id)
-                            console.log('del_flgデータを削除したよ');
-                          },
-                          () => {
-                            console.log("失敗");
-                          }
-                        );
-                      })
-                    }
-                    
-                  }
-                })
-              });
-              
-              // 追加
-              const local_communication_list = rocal.map((r) => {
-                return (r.communication_id);
-              });
-              
-              const server_communication_list = communication.map((c) => {
-                return (c.communication_id);
-              });
-              
-              const add_communication_list = server_communication_list.filter(c => local_communication_list.indexOf(c) == -1)
-              
-              // 最大20件に制御するため古いものを削除する
-              if (rocal.length > 20){
-                tx.executeSql(
-                  `delete from communication_mst where (communication_id = ? and customer_id = ?);`,
-                  [rocal[0].communication_id,rocal[0].customer_id],
-                  (_, { rows }) => {
-                    // console.log(r.communication_id)
-                    console.log('古いデータを削除したよ');
-                  },
-                  () => {
-                    console.log("失敗");
-                  }
-                );
-              }
-              
-              communication.map((c) => {
-                add_communication_list.map((add) => {
-                  
-                  if (c.communication_id === add && !c.del_flg) {
-                    db.transaction((tx) => {
-                      
-                      tx.executeSql(
-                        `insert into communication_mst values (?,?,?,?,?,?,?,?,?,?);`,
-                        [c.communication_id,c.customer_id,c.speaker,c.time,c.title,c.note,c.line_note,c.file_path,c.status,c.html_flg],
-                        () => {
-                          console.log(c.communication_id)
-                          console.log("新しいコミュニケーションを追加したよ");
-                        },
-                        () => {
-                          console.log("新しいコミュニケーションのデータ追加 失敗");
-                        }
-                      );
-                      
-                    })
-                  }
-                  
-                })
-              })
-              
-            })
-            
-          }
-        },
-        () => {console.log("失敗");}
-      );
-      
-      tx.executeSql(
-        `select * from communication_mst order by time desc;`,
-        // `delete from communication_mst;`,
-        [],
-        (_, { rows }) => {
-          // console.log(rows._array[0])
-        },
-        () => {
-          console.log("失敗");
+      var del_list = []; // 削除リスト
+      var count_   = 0;  // 20件までのカウント
+
+      // 最新トーク
+      talklist: for (var c=0;c<communication.length;c++) {
+
+        var com = communication[c];
+
+        if (count_ == 20) break;
+
+        // 削除フラグは追加しない
+        if (com.del_flg) {
+          del_list.push(com);
+          continue talklist;
         }
-      );
+
+        var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?);`;
+
+        var data = [
+          com.communication_id,
+          com.customer_id,
+          com.speaker,
+          com.time,
+          com.title,
+          com.note,
+          com.line_note,
+          com.file_path,
+          com.status,
+          com.html_flg
+        ];
+
+        count_++;
+        await db_write(sql,data);
+
+      }
+
+      // 削除フラグが立っているコミュニケーション履歴を削除する
+      for (var d=0;d<del_list.length;d++) {
+        var delsql = `delete from communication_mst where (communication_id = ? and customer_id = ?);`
+        var data = [
+          del_list[d]["communication_id"],
+          del_list[d]["customer_id"]
+        ]
+        await db_write(delsql,data);
+      }
+
+      // 20件超えたら古いものから削除する
+      var sql = `select count(*) as count from communication_mst where customer_id = '${route.customer}';`;
+      var talk_ = await db_select(sql);
+      const cnt = talk_[0]["count"];
       
-    });
+      if (cnt >= 20) {
+        var delcus = `DELETE FROM communication_mst WHERE customer_id = '${route.customer}' AND time NOT IN (SELECT time FROM communication_mst WHERE customer_id = '${route.customer}' ORDER BY time DESC LIMIT 20);`;
+        await db_write(delcus,[]);
+      }
+
+    }
   
   }
   
@@ -798,32 +682,49 @@ export default function TalkScreen(props) {
     Keyboard.dismiss(); // キーボード隠す
   }
   
+  const LibraryPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `カメラロールへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
+    });
+
+	  // カメラロールのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
   // カメラロールから画像またはビデオを選択
   const pickImage = async (item) => {
     
-    // カメラロールのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          `カメラロールへのアクセスが無効になっています`,
-          "設定画面へ移動しますか？",
-          [
-            {
-              text: "キャンセル",
-              style: "cancel",
-              onPress:() => {return}
-            },
-            {
-              text: "設定する",
-              onPress: () => {
-                Linking.openURL("app-settings:");
-              }
-            }
-          ]
-        );
-      }
+    if (!await LibraryPermissionsCheck()) {
+      setModal0(false);
+      return
     }
     
     if(!customer.line){
@@ -893,6 +794,7 @@ export default function TalkScreen(props) {
       }
       
     }
+    setLoading(false);
     setModal0(false)
 	};
 	
@@ -904,9 +806,9 @@ export default function TalkScreen(props) {
     } else {
       
       setLoading(true);
-      if (result) {
+  	  if (result.canceled != true) {
         
-        let filename = result.uri.split('/').pop();
+        let filename = result.assets[0].uri.split('/').pop();
   
         let match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image`;
@@ -922,13 +824,13 @@ export default function TalkScreen(props) {
         formData.append('file', { uri: result.uri, name: filename, type });
         
         fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-      {
-        method: 'POST',
-        body: formData,
-        header: {
-          'content-type': 'multipart/form-data',
-        },
-      })
+        {
+          method: 'POST',
+          body: formData,
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+        })
         .then((response) => response.json())
         .then((json) => {
           
@@ -958,32 +860,99 @@ export default function TalkScreen(props) {
           Alert.alert(errorMsg);
         })
         
+        setLoading(false);
+        setModal0(false);
+      } else {
+        setLoading(false);
+        setModal0(false);
       }
       
     }
-    setModal0(false)
   };
 	
+  const [c_permission, c_requestPermission] = Camera.useCameraPermissions();
+
+  const CameraPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `カメラへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
+    });
+
+    const { status } = await c_requestPermission();
+    
+	  // カメラのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
+  const [a_permissionResponse, a_requestPermission] = Audio.usePermissions();
+
+  const AudioPermissionsCheck = async() => {
+
+    const AsyncAlert = async () => new Promise((resolve) => {
+      Alert.alert(
+        `マイクへのアクセスが無効になっています`,
+        "設定画面へ移動しますか？",
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress:() => {resolve(false)}
+          },
+          {
+            text: "設定する",
+            onPress: () => {
+              Linking.openSettings();
+              resolve(false)
+            }
+          }
+        ]
+      );
+    });
+
+    const { status } = await a_requestPermission();
+    
+	  // マイクのアクセス許可を付与
+    if (Platform.OS !== 'web') {
+      if (status !== 'granted') {
+        await AsyncAlert();
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+  }
+
 	// オンライン通話URL挿入
 	const online_call = async (id) => {
 	  
-	  // カメラのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA);
-      if (status !== 'granted') {
-        Alert.alert('カメラへのアクセスを許可してください');
-        return
-      }
-    }
-    
-    // マイクのアクセス許可を付与
-    if (Platform.OS !== 'web') {
-        const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-      if (status !== 'granted') {
-        Alert.alert('マイクへのアクセスを許可してください');
-        return
-      }
-    }
+	  if (!await CameraPermissionsCheck()) return;
+	  if (!await AudioPermissionsCheck()) return;
 	  
     Alert.alert(
       "通話画面を開きますか？",
@@ -1052,6 +1021,25 @@ export default function TalkScreen(props) {
     }
   }
   
+  const [filteredFixed, setFilteredFixed] = useState([]);
+
+  // リストからHTML用の定型文をフィルタリング
+  const filterFixedByCategory = (category) => {
+    const filtered = fixed.filter((obj) => obj.category !== category);
+    setFilteredFixed(filtered);
+  }
+
+  useEffect(() => {
+    if (fixed.length != 0) {
+      if (modal4) {
+        // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
+        filterFixedByCategory('HTML用');
+      } else {
+        setFilteredFixed(fixed);
+      }
+    }
+  }, [modal1, modal4,fixed]);
+
   const [menu_height,setMenu_height] = useState(false);
   const getHeight = (e) => {
     const height = e.nativeEvent.layout.height;
@@ -1163,18 +1151,6 @@ export default function TalkScreen(props) {
       minInputToolbarHeight={30}
       messagesContainerStyle={[
         menu&&{paddingBottom:190}
-        // menu?
-        //   Platform.select({
-        //     ios: {height:400},
-        //     android: {height:550},
-        //   })
-        //   :null,
-        // menu&&menu_height?
-        //   Platform.select({
-        //     ios: {height:400-menu_height},
-        //     android: {height:550-menu_height},
-        //   })
-        //   :null,
       ]}
       
       onLayout={(e) => getHeight(e)}
@@ -1249,10 +1225,10 @@ export default function TalkScreen(props) {
               route={route}
               onSend={onSend}
               property={property}
-              station_list={route.station}
-              address={route.address}
+              station_list={station}
+              address={address}
               c_d={conditions_date}
-              fixed={route.fixed}
+              fixed={fixed}
               hensu={customer.main ? [
                 customer.main.name,
                 staff.corporations_name,
@@ -1265,8 +1241,8 @@ export default function TalkScreen(props) {
                 chatbot
               ]:[]}
               mail_select={staff.mail_select}
-              options={options}
-              options2={options2}
+              options={video_option}
+              options2={options}
             />
             <MyModal2
               isVisible={modal2}
@@ -1298,8 +1274,8 @@ export default function TalkScreen(props) {
               onClose={()=>{ setModal3(false) }}
               route={route}
               property={property}
-              station_list={route.station}
-              address={route.address}
+              station_list={station}
+              address={address}
               c_d={conditions_date}
               msgtext={props.user.text}
               setMsgtext={setMsgtext}
@@ -1310,7 +1286,7 @@ export default function TalkScreen(props) {
               isVisible={modal4}
               onSwipeComplete={() => { setModal4(false) }}
               onPress={()=>{ setModal4(false) }}
-              fixed={route.fixed}
+              fixed={filteredFixed}
               msgtext={msgtext}
               subject={subject}
               setMsgtext={setMsgtext}
@@ -1337,6 +1313,17 @@ export default function TalkScreen(props) {
 }
 
 const styles = StyleSheet.create({
+  name: {
+    color:'#ffffff',
+    fontSize:18,
+    fontWeight:'500'
+  },
+  sendContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginRight: 15,
+  },
   menu_btn:{
     flex:1,
     alignItems: 'center',
@@ -1348,12 +1335,6 @@ const styles = StyleSheet.create({
   menu_btn_text:{
     color:'#1f2d53',
     fontSize:20,
-  },
-  sendContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginRight: 15,
   },
   textInput: {
     marginTop:5,
@@ -1395,10 +1376,5 @@ const styles = StyleSheet.create({
     color:'#1f2d53',
     marginTop:5,
     textAlign:'center',
-  },
-  name: {
-    color:'#ffffff',
-    fontSize:18,
-    fontWeight:'500'
   },
 });

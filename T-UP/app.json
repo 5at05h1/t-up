@@ -16,38 +16,31 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "notification": { // androidの通知アイコン
-      "icon": "./assets/notificationicon.png",
+    "notification": {
+      "icon": "./assets/notificationicon.png"
     },
     "ios": {
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-1369937549147272~5189110280" // 広告の設定
-      },
       "supportsTablet": true,
       "bundleIdentifier": "com.TUP-CRM",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.2.8", //20220513更新
+      "buildNumber": "2.2.8",
       "infoPlist": {
-        "CFBundleShortVersionString":"2.2.8",
-        "UIRequiresFullScreen":"YES",
-        "CFBundleDevelopmentRegion":"ja_JP",
-        "NSPhotoLibraryUsageDescription":"写真を送信するためにカメラロールを使用します",
+        "UIRequiresFullScreen": "YES",
+        "CFBundleDevelopmentRegion": "ja_JP",
+        "NSPhotoLibraryUsageDescription": "写真を送信または登録するのに使用します",
         "NSCameraUsageDescription": "オンライン通話にカメラを使用します",
         "NSMicrophoneUsageDescription": "オンライン通話にマイクを使用します",
+        "NSUserTrackingUsageDescription": "「許可」することで表示される広告がユーザーに最適化された内容になります。"
       }
     },
     "android": {
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-1369937549147272~6418447382" // 広告の設定
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.TUP_CRM",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 18, //20220513更新
-      
+      "versionCode": 18,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
@@ -65,10 +58,31 @@
         "com.sec.android.provider.badge.permission.READ",
         "com.sec.android.provider.badge.permission.WRITE",
         "com.sonyericsson.home.permission.BROADCAST_BADGE"
-      ],
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-    }
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-localization",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "「許可」することで表示される広告がユーザーに最適化された内容になります。"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ]
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-1369937549147272~6418447382",
+    "ios_app_id": "ca-app-pub-1369937549147272~5189110280"
   }
 }

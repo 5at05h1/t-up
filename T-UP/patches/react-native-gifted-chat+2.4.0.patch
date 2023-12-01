@@ -1,0 +1,458 @@
+diff --git a/node_modules/react-native-gifted-chat/lib/Bubble.js b/node_modules/react-native-gifted-chat/lib/Bubble.js
+index 70b74ae..a8fc8fa 100644
+--- a/node_modules/react-native-gifted-chat/lib/Bubble.js
++++ b/node_modules/react-native-gifted-chat/lib/Bubble.js
+@@ -19,7 +19,7 @@ const styles = {
+         wrapper: {
+             borderRadius: 15,
+             backgroundColor: Color.leftBubbleBackground,
+-            marginRight: 60,
++            // marginRight: 60,
+             minHeight: 20,
+             justifyContent: 'flex-end',
+         },
+@@ -42,15 +42,15 @@ const styles = {
+         wrapper: {
+             borderRadius: 15,
+             backgroundColor: Color.defaultBlue,
+-            marginLeft: 60,
++            marginLeft: 45,
+             minHeight: 20,
+             justifyContent: 'flex-end',
+         },
+         containerToNext: {
+-            borderBottomRightRadius: 3,
++            borderBottomRightRadius: 1,
+         },
+         containerToPrevious: {
+-            borderTopRightRadius: 3,
++            borderTopRightRadius: 1,
+         },
+         bottom: {
+             flexDirection: 'row',
+@@ -68,7 +68,7 @@ const styles = {
+             marginRight: 10,
+         },
+         username: {
+-            top: -3,
++            // top: -3,
+             left: 0,
+             fontSize: 12,
+             backgroundColor: 'transparent',
+@@ -76,7 +76,7 @@ const styles = {
+         },
+         usernameView: {
+             flexDirection: 'row',
+-            marginHorizontal: 10,
++            // marginHorizontal: 10,
+         },
+     }),
+ };
+@@ -114,6 +114,31 @@ export default class Bubble extends React.Component {
+                 });
+             }
+         };
++        this.onPress = () => {
++            const { currentMessage } = this.props;
++            if (this.props.onPress) {
++                this.props.onPress(this.context, this.props.currentMessage);
++            }
++            else if (currentMessage && currentMessage.text) {
++                const { optionTitles } = this.props;
++                const options = optionTitles && optionTitles.length > 0
++                    ? optionTitles.slice(0, 2)
++                    : DEFAULT_OPTION_TITLES;
++                const cancelButtonIndex = options.length - 1;
++                this.context.actionSheet().showActionSheetWithOptions({
++                    options,
++                    cancelButtonIndex,
++                }, (buttonIndex) => {
++                    switch (buttonIndex) {
++                        case 0:
++                            Clipboard.setString(currentMessage.text);
++                            break;
++                        default:
++                            break;
++                    }
++                });
++            }
++        };
+     }
+     styledBubbleToNext() {
+         const { currentMessage, nextMessage, position, containerToNextStyle, } = this.props;
+@@ -226,14 +251,11 @@ export default class Bubble extends React.Component {
+         return null;
+     }
+     renderUsername() {
+-        const { currentMessage, user, renderUsername } = this.props;
++        const { currentMessage, user } = this.props;
+         if (this.props.renderUsernameOnMessage && currentMessage) {
+             if (user && currentMessage.user._id === user._id) {
+                 return null;
+             }
+-            if (renderUsername) {
+-                return renderUsername(currentMessage.user);
+-            }
+             return (<View style={styles.content.usernameView}>
+           <Text style={[styles.content.username, this.props.usernameStyle]}>
+             ~ {currentMessage.user.name}
+@@ -242,6 +264,34 @@ export default class Bubble extends React.Component {
+         }
+         return null;
+     }
++    renderStatus() {
++        const { currentMessage, user } = this.props;
++        if (this.props.renderStatus && currentMessage) {
++            if (user && currentMessage.user.status === user.status) {
++                return null;
++            }
++            return (<View style={styles.content.usernameView}>
++          <Text style={[styles.content.username, this.props.usernameStyle]}>
++            行動：{currentMessage.user.status}
++          </Text>
++        </View>);
++        }
++        return null;
++    }
++    renderTitle() {
++        const { currentMessage, user } = this.props;
++        if (this.props.renderTitle && currentMessage) {
++            if (user && currentMessage.user.title === user.title) {
++                return null;
++            }
++            return (<View style={styles.content.usernameView}>
++          <Text style={[styles.content.username, this.props.usernameStyle]}>
++            タイトル：{currentMessage.user.title}
++          </Text>
++        </View>);
++        }
++        return null;
++    }
+     renderCustomView() {
+         if (this.props.renderCustomView) {
+             return this.props.renderCustomView(this.props);
+@@ -266,28 +316,32 @@ export default class Bubble extends React.Component {
+     render() {
+         const { position, containerStyle, wrapperStyle, bottomContainerStyle, } = this.props;
+         return (<View style={[
+-                styles[position].container,
+-                containerStyle && containerStyle[position],
+-            ]}>
+-        <View style={[
+-                styles[position].wrapper,
+-                this.styledBubbleToNext(),
+-                this.styledBubbleToPrevious(),
+-                wrapperStyle && wrapperStyle[position],
+-            ]}>
+-          <TouchableWithoutFeedback onPress={this.onPress} onLongPress={this.onLongPress} accessibilityRole='text' {...this.props.touchableProps}>
+-            <View>
+-              {this.renderBubbleContent()}
+-              <View style={[
+-                styles[position].bottom,
+-                bottomContainerStyle && bottomContainerStyle[position],
+-            ]}>
+-                {this.renderUsername()}
+-                {this.renderTime()}
+-                {this.renderTicks()}
++            styles[position].container,
++            containerStyle && containerStyle[position],
++        ]}>
++        {this.renderStatus()}
++        {this.renderTitle()}
++        <View style={{flexDirection:'row'}}>
++          <View style={[
++              styles[position].wrapper,
++              this.styledBubbleToNext(),
++              this.styledBubbleToPrevious(),
++              wrapperStyle && wrapperStyle[position],
++          ]}>
++            <TouchableWithoutFeedback onPress={this.onPress} onLongPress={this.onLongPress} accessibilityTraits='text' {...this.props.touchableProps}>
++              <View>
++                {this.renderBubbleContent()}
++                <View style={[
++              styles[position].bottom,
++              bottomContainerStyle && bottomContainerStyle[position],
++          ]}>
++                  {this.renderUsername()}
++                  {this.renderTicks()}
++                </View>
+               </View>
+-            </View>
+-          </TouchableWithoutFeedback>
++            </TouchableWithoutFeedback>
++          </View>
++          {this.renderTime()}
+         </View>
+         {this.renderQuickReplies()}
+       </View>);
+@@ -304,6 +358,8 @@ Bubble.defaultProps = {
+     renderMessageText: null,
+     renderCustomView: null,
+     renderUsername: null,
++    renderStatus: null,
++    renderTitle: null,
+     renderTicks: null,
+     renderTime: null,
+     renderQuickReplies: null,
+@@ -329,6 +385,7 @@ Bubble.propTypes = {
+     user: PropTypes.object.isRequired,
+     touchableProps: PropTypes.object,
+     onLongPress: PropTypes.func,
++    onPress: PropTypes.func,
+     renderMessageImage: PropTypes.func,
+     renderMessageVideo: PropTypes.func,
+     renderMessageAudio: PropTypes.func,
+@@ -337,6 +394,8 @@ Bubble.propTypes = {
+     isCustomViewBottom: PropTypes.bool,
+     renderUsernameOnMessage: PropTypes.bool,
+     renderUsername: PropTypes.func,
++    renderStatus: PropTypes.bool,
++    renderTitle: PropTypes.bool,
+     renderTime: PropTypes.func,
+     renderTicks: PropTypes.func,
+     renderQuickReplies: PropTypes.func,
+diff --git a/node_modules/react-native-gifted-chat/lib/Composer.js b/node_modules/react-native-gifted-chat/lib/Composer.js
+index 7bbf561..ef8d4ee 100644
+--- a/node_modules/react-native-gifted-chat/lib/Composer.js
++++ b/node_modules/react-native-gifted-chat/lib/Composer.js
+@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
+         }),
+     },
+ });
+-export function Composer({ composerHeight = MIN_COMPOSER_HEIGHT, disableComposer = false, keyboardAppearance = 'default', multiline = true, onInputSizeChanged = () => { }, onTextChanged = () => { }, placeholder = DEFAULT_PLACEHOLDER, placeholderTextColor = Color.defaultColor, text = '', textInputAutoFocus = false, textInputProps = {}, textInputStyle, }) {
++export function Composer({ composerHeight = MIN_COMPOSER_HEIGHT, disableComposer = false, keyboardAppearance = 'default', multiline = true, onInputSizeChanged = () => { }, onTextChanged = () => { }, placeholder = DEFAULT_PLACEHOLDER, placeholderTextColor = Color.defaultColor, text = '', textInputAutoFocus = false, textInputProps = {}, textInputStyle, onLayout = () => {} }) {
+     const dimensionsRef = useRef();
+     const determineInputSizeChange = useCallbackOne((dimensions) => {
+         // Support earlier versions of React Native on Android.
+@@ -46,7 +46,7 @@ export function Composer({ composerHeight = MIN_COMPOSER_HEIGHT, disableComposer
+         }
+     }, [onInputSizeChanged]);
+     const handleContentSizeChange = ({ nativeEvent: { contentSize }, }) => determineInputSizeChange(contentSize);
+-    return (<TextInput testID={placeholder} accessible accessibilityLabel={placeholder} placeholder={placeholder} placeholderTextColor={placeholderTextColor} multiline={multiline} editable={!disableComposer} onContentSizeChange={handleContentSizeChange} onChangeText={onTextChanged} style={[
++    return (<TextInput testID={placeholder} accessible accessibilityLabel={placeholder} placeholder={placeholder} placeholderTextColor={placeholderTextColor} multiline={multiline} editable={!disableComposer} onContentSizeChange={handleContentSizeChange} onChangeText={onTextChanged} onLayout={onLayout} style={[
+             styles.textInput,
+             textInputStyle,
+             {
+@@ -74,5 +74,6 @@ Composer.propTypes = {
+     textInputStyle: StylePropType,
+     textInputAutoFocus: PropTypes.bool,
+     keyboardAppearance: PropTypes.string,
++    onLayout: PropTypes.func,
+ };
+ //# sourceMappingURL=Composer.js.map
+\ No newline at end of file
+diff --git a/node_modules/react-native-gifted-chat/lib/InputToolbar.js b/node_modules/react-native-gifted-chat/lib/InputToolbar.js
+index 2ff651d..c6ae2db 100644
+--- a/node_modules/react-native-gifted-chat/lib/InputToolbar.js
++++ b/node_modules/react-native-gifted-chat/lib/InputToolbar.js
+@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
+         alignItems: 'flex-end',
+     },
+     accessory: {
+-        height: 44,
++        height: 20,
+     },
+ });
+ export function InputToolbar(props) {
+diff --git a/node_modules/react-native-gifted-chat/lib/MessageText.js b/node_modules/react-native-gifted-chat/lib/MessageText.js
+index dd834d6..629fe53 100644
+--- a/node_modules/react-native-gifted-chat/lib/MessageText.js
++++ b/node_modules/react-native-gifted-chat/lib/MessageText.js
+@@ -1,6 +1,7 @@
+ import PropTypes from 'prop-types';
+ import React from 'react';
+-import { Linking, StyleSheet, View, } from 'react-native';
++import { Linking, StyleSheet, View,useWindowDimensions } from 'react-native';
++import RenderHtml, { HTMLElementModel, HTMLContentModel } from 'react-native-render-html';
+ // @ts-ignore
+ import ParsedText from 'react-native-parsed-text';
+ import { StylePropType } from './utils';
+@@ -21,22 +22,22 @@ const styles = {
+     left: StyleSheet.create({
+         container: {},
+         text: {
+-            color: 'black',
++            color: 'white',
+             ...textStyle,
+         },
+         link: {
+-            color: 'black',
++            color: 'white',
+             textDecorationLine: 'underline',
+         },
+     }),
+     right: StyleSheet.create({
+         container: {},
+         text: {
+-            color: 'white',
++            color: '#1f2d53',
+             ...textStyle,
+         },
+         link: {
+-            color: 'white',
++            color: '#1f2d53',
+             textDecorationLine: 'underline',
+         },
+     }),
+@@ -94,23 +95,107 @@ export function MessageText({ currentMessage = {}, optionTitles = DEFAULT_OPTION
+         styles[position].link,
+         linkStyleProp && linkStyleProp[position],
+     ];
+-    return (<View style={[
++    // HTMLチェック
++    function htmlCheck(text) {
++      var htmlTagsRegex = /<[^>]*>/;
++      return htmlTagsRegex.test(text);
++    }
++    if (currentMessage.user.html_flg || htmlCheck(currentMessage.text)) {
++      
++      const { width } = useWindowDimensions();
++      let source = currentMessage.text.split('”').join('"');
++      
++      // メールモンスター用のCSS変更
++      source = source.split('height:100%').join('');
++      source = source.split('widows:100%').join('width:100%');
++      source = source.split('width:100%').join('width:250px');
++      source = source.split('size=280&').join('size=120&');
++
++      // 改行の変換
++      source = source.split("\n").join("<br>");
++
++      const fontElementModel = HTMLElementModel.fromCustomModel({
++        tagName: 'font',
++        contentModel: HTMLContentModel.mixed,
++        getUADerivedStyleFromAttributes({face, color, size}) {
++          let style = {};
++          if (face) {
++            style.fontFamily = face;
++          }
++          if (color) {
++            style.color = color;
++          }
++          if (size) {
++            if (size == 1) {
++              style.fontSize = 10;
++            } else if (size == 2) {
++              style.fontSize = 13;
++            } else if (size == 3) {
++              style.fontSize = 16;
++            } else if (size == 4) {
++              style.fontSize = 18;
++            } else if (size == 5) {
++              style.fontSize = 24;
++            } else if (size == 6) {
++              style.fontSize = 32;
++            } else if (size == 7) {
++              style.fontSize = 48;
++            } else {
++              style.fontSize = 16;
++            } 
++          }
++          return style;
++        },
++      });
++
++      const customHTMLElementModels = {font: fontElementModel};
++
++      return (<View style={[
+             styles[position].container,
+-            containerStyle && containerStyle[position],
++            containerStyle &&
++                containerStyle[position],
+         ]}>
+-      <ParsedText style={[
++        <View style={[
+             styles[position].text,
+             textStyle && textStyle[position],
+             customTextStyle,
+         ]} parse={[
+             ...parsePatterns(linkStyle),
+-            { type: 'url', style: linkStyle, onPress: onUrlPress },
+-            { type: 'phone', style: linkStyle, onPress: onPhonePress },
+-            { type: 'email', style: linkStyle, onPress: onEmailPress },
++            { type: 'url', style: linkStyle, onPress: this.onUrlPress },
++            { type: 'phone', style: linkStyle, onPress: this.onPhonePress },
++            { type: 'email', style: linkStyle, onPress: this.onEmailPress },
+         ]} childrenProps={{ ...textProps }}>
+-        {currentMessage.text}
+-      </ParsedText>
+-    </View>);
++          <RenderHtml
++            contentWidth={width}
++            source={{
++              html: `${source}`,
++            }}
++            customHTMLElementModels={customHTMLElementModels}
++          />
++        </View>
++      </View>);
++
++    } else {
++
++      return (<View style={[
++                    styles[position].container,
++                    containerStyle && containerStyle[position],
++                ]}>
++              <ParsedText style={[
++                    styles[position].text,
++                    textStyle && textStyle[position],
++                    customTextStyle,
++                ]} parse={[
++                    ...parsePatterns(linkStyle),
++                    { type: 'url', style: linkStyle, onPress: onUrlPress },
++                    { type: 'phone', style: linkStyle, onPress: onPhonePress },
++                    { type: 'email', style: linkStyle, onPress: onEmailPress },
++                ]} childrenProps={{ ...textProps }}>
++                {currentMessage.text}
++              </ParsedText>
++              </View>);
++  
++    }
+ }
+ MessageText.propTypes = {
+     position: PropTypes.oneOf(['left', 'right']),
+diff --git a/node_modules/react-native-gifted-chat/lib/Time.js b/node_modules/react-native-gifted-chat/lib/Time.js
+index 821a899..81c9a1d 100644
+--- a/node_modules/react-native-gifted-chat/lib/Time.js
++++ b/node_modules/react-native-gifted-chat/lib/Time.js
+@@ -8,8 +8,8 @@ import { StylePropType } from './utils';
+ import { useChatContext } from './GiftedChatContext';
+ const { containerStyle } = StyleSheet.create({
+     containerStyle: {
+-        marginLeft: 10,
+-        marginRight: 10,
++        // marginLeft: 10,
++        // marginRight: 10,
+         marginBottom: 5,
+     },
+ });
+@@ -18,12 +18,15 @@ const { textStyle } = StyleSheet.create({
+         fontSize: 10,
+         backgroundColor: 'transparent',
+         textAlign: 'right',
++        color: '#1f2d53',
+     },
+ });
+ const styles = {
+     left: StyleSheet.create({
+         container: {
+             ...containerStyle,
++            marginLeft: 5,
++            justifyContent: 'flex-end'
+         },
+         text: {
+             color: Color.timeTextColor,
+@@ -33,9 +36,12 @@ const styles = {
+     right: StyleSheet.create({
+         container: {
+             ...containerStyle,
++            position:'absolute',
++            left:0,
++            bottom:0,
+         },
+         text: {
+-            color: Color.white,
++          color: '#1f2d53',
+             ...textStyle,
+         },
+     }),

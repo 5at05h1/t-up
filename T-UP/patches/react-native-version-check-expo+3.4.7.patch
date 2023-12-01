@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-version-check-expo/src/ExpoVersionInfo.js b/node_modules/react-native-version-check-expo/src/ExpoVersionInfo.js
+index 03fd474..8f081e5 100644
+--- a/node_modules/react-native-version-check-expo/src/ExpoVersionInfo.js
++++ b/node_modules/react-native-version-check-expo/src/ExpoVersionInfo.js
+@@ -11,8 +11,8 @@ if (process.env.RNVC_ENV === 'test') {
+     currentVersion: '0.0.1',
+   };
+ } else {
+-  const manifest = Constants.manifest
+-    ? Constants.manifest
++  const manifest = Constants.expoConfig
++    ? Constants.expoConfig
+     : Constants.manifest2.extra.expoClient;
+   const {
+     version = null,

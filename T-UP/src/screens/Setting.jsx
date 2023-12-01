@@ -8,15 +8,22 @@ import { Feather } from '@expo/vector-icons';
 import GestureRecognizer from 'react-native-swipe-gestures';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from "react-native-modal";
+import Storage from 'react-native-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Loading from '../components/Loading';
-import GetDB from '../components/Get_databace';
+import { db,db_write } from '../components/Databace';
 
 import * as SQLite from "expo-sqlite";
-const db = SQLite.openDatabase("db");
 
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
+
+// ローカルストレージ読み込み
+const storage = new Storage({
+  storageBackend: AsyncStorage,
+  defaultExpires: null,
+});
 
 export default function Setting(props) {
   
@@ -241,8 +248,6 @@ export default function Setting(props) {
                   name: 'CommunicationHistory',
                   params: route.params,
                   websocket:route.websocket,
-                  station:route.station,
-                  address:route.address,
                   previous:'Setting'
                 }],
               });
@@ -257,7 +262,7 @@ export default function Setting(props) {
           color='white'
           size={30}
           onPress={() => logout()}
-          style={{paddingHorizontal:20,paddingVertical:20}}
+          style={{paddingHorizontal:10,paddingVertical:20}}
         />
       ),
     });
@@ -270,100 +275,83 @@ export default function Setting(props) {
     return () => backHandler.remove();
   }, []);
   
-function Delete_staff_db(){
-  
-  new Promise((resolve, reject)=>{
-    db.transaction((tx) => {
-    
-      // スタッフ
-      tx.executeSql(
-        `delete from staff_mst;`,
-        [],
-        () => {console.log("delete staff_mst OK");},
-        () => {console.log("delete staff_mst 失敗");}
-      );
-      // スタッフ一覧
-      tx.executeSql(
-        `delete from staff_list;`,
-        [],
-        () => {console.log("staff_list 削除");},
-        () => {console.log("失敗");}
-      );
-      // お客様
-      tx.executeSql(
-        `delete from customer_mst;`,
-        [],
-        () => {console.log("customer_mst 削除");},
-        () => {console.log("失敗");}
-      );
-      // コミュニケーション履歴
-      tx.executeSql(
-        `delete from communication_mst;`,
-        [],
-        () => {console.log("communication_mst 削除");},
-        () => {console.log("失敗");}
-      );
-      // 定型文
-      tx.executeSql(
-        `delete from fixed_mst;`,
-        [],
-        () => {console.log("fixed_mst 削除");},
-        () => {console.log("失敗");}
-      );
-    
-    // →→→ 駅・沿線、エリアは残す
-    
-      resolve();
-    })
-    
-  });
+  async function Delete_staff_db(){
 
-}
+    const dbList = [
+      "staff_mst",
+      "staff_list",
+      "customer_mst",
+      "communication_mst",
+      "fixed_mst",
+    ]
+    
+    for (var d=0;d<dbList.length;d++) {
+      var table = dbList[d];
+      var delete_sql = `delete from ${table};`;
+      const del_res = await db_write(delete_sql,[]);
+      if (del_res) {
+        console.log(`${table} 削除 成功`);
+      } else {
+        console.log(`${table} 削除 失敗`);
+      }
+    }
   
-  function logout() {
-    Alert.alert(
-      "ログアウトしますか？",
-      "",
-      [
-        {
-          text: "はい",
-          onPress: () => {
-            
-            Delete_staff_db();
-            route.websocket.close()
-            
-            if(global.sp_token && global.sp_id){
-              
-              // サーバーに情報送信して、DBから削除
-              fetch(domain+'batch_app/set_staff_app_token_tup.php', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  id: global.sp_id,
-                  token: global.sp_token,
-                  del_flg:1,
-                }),
-              })
-              
-            }
-            
-            global.sp_token = ''; // スマホトークン
-            global.sp_id = '';    // ログインID
-            
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'LogIn' }],
-            });
-          }
+  }
+    
+  async function logout() {
+    
+    const logoutCheck = async () => new Promise((resolve) => {
+      Alert.alert(
+        "ログアウトしますか？",
+        "",
+        [
+          {
+            text: "はい",
+            onPress: async() => {resolve(true);}
+          },
+          {
+            text: "いいえ",
+            style: "cancel",
+            onPress:() => {resolve(false);}
+          },
+        ]
+      );
+    })
+
+    if (!await logoutCheck()) return;
+
+    storage.save({
+      key: 'GET-DATA',
+      data: '',
+    });
+
+    await Delete_staff_db();
+    
+    if(global.sp_token && global.sp_id){
+      
+      // サーバーに情報送信して、DBから削除
+      await fetch(domain+'app/app_system/set_staff_app_token.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          text: "いいえ",
-        },
-      ]
-    );
-  
+        body: JSON.stringify({
+          id: global.sp_id,
+          token: global.sp_token,
+          del_flg:1,
+        }),
+      })
+      
+    }
+    
+    global.sp_token = ''; // スマホトークン
+    global.sp_id = '';    // ログインID
+    
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'LogIn' }],
+    });
+    
   }
   
   const [mail_check,setMail_check] = useState(null);
