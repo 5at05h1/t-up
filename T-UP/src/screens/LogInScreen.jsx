@@ -10,6 +10,7 @@ import * as SQLite from "expo-sqlite";
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+import Constants from 'expo-constants';
 
 import Loading from '../components/Loading';
 import { CreateDB, GetDB,db_select,db_write} from '../components/Databace';
@@ -599,7 +600,7 @@ async function registerForPushNotificationsAsync() {
     }
     
     // 【重要】端末別のトークン取得
-    token = (await Notifications.getExpoPushTokenAsync()).data;
+    token = (await Notifications.getExpoPushTokenAsync({'projectId': Constants.expoConfig.extra.eas.projectId})).data;
     
     // グローバル変数にトークンを格納
     global.sp_token = token;

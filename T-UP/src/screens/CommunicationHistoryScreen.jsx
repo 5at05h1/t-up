@@ -231,7 +231,11 @@ export default function CommunicationHistoryScreen(props) {
 
     await Insert_fixed_db("");
 
-    loadflg&&setLoading(false);
+    var sql = `select count(*) as count from customer_mst;`;
+    var customer = await db_select(sql);
+    const cnt2 = customer[0]["count"];
+
+    if (loadflg && cnt2 > 0) setLoading(false);
 
   }
 
