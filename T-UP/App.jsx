@@ -9,7 +9,7 @@ import LogInScreen from './src/screens/LogInScreen';
 import CommunicationHistoryScreen from './src/screens/CommunicationHistoryScreen';
 import TalkScreen from './src/screens/TalkScreen';
 import Setting from './src/screens/Setting';
-import Loading from './src/components/Loading';
+import Schedule from './src/screens/Schedule';
 
 const Stack = createStackNavigator();
 LogBox.ignoreLogs(['Setting a timer']);
@@ -34,7 +34,7 @@ export default function App() {
         screenOptions={{
           headerStyle: { backgroundColor: '#1f2d53', height: 110},
           title: ( <Logo /> ),
-          headerTitleStyle: { paddingRight:10},
+          headerTitleStyle: {},
           headerTitleAlign: 'center',
           headerTintColor: '#ffffff',
           headerBackTitle: (<Feather name='chevron-left' color='white' size={30} />),
@@ -62,6 +62,10 @@ export default function App() {
         <Stack.Screen
           name="Setting"
           component={Setting}
+        />
+        <Stack.Screen
+          name="Schedule"
+          component={Schedule}
         />
       </Stack.Navigator>
     </NavigationContainer>

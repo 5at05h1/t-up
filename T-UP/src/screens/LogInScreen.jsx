@@ -682,6 +682,7 @@ async function registerForPushNotificationsAsync() {
         >
           <Text style={styles.buttonLabel}>ログイン</Text>
         </TouchableOpacity>
+        <Text style={styles.version}>var {appVersion}</Text>
       </View>
     </View>
   );
@@ -696,6 +697,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     marginBottom: 25,
     marginTop: 50,
+    flex: 1,
   },
   form: {
     width: "100%"
@@ -728,4 +730,9 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom:5,
   },
+  version :{
+    position:'absolute',
+    bottom:0,
+    right:15
+  }
 });

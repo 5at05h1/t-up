@@ -457,6 +457,7 @@ export default function CommunicationHistoryScreen(props) {
           ID: route.params.account,
           pass: route.params.password,
           act: "customer_list",
+          page:0,
         }),
         signal
       })
@@ -489,6 +490,7 @@ export default function CommunicationHistoryScreen(props) {
           ID: route.params.account,
           pass: route.params.password,
           act: "customer_list",
+          page:page,
         }),
       })
       .then((response) => response.json())
@@ -583,11 +585,7 @@ export default function CommunicationHistoryScreen(props) {
 
         var cus = customer[c];
 
-        if (
-          cus.html_flg ||
-          (cus.communication_title === "入居申込書" &&
-            cus.communication_status === "その他")
-        ) {
+        if (cus.html_flg) {
           cus.communication_note = cus.communication_note.replace(
             /<("[^"]*"|'[^']*'|[^'">])*>/g,
             ""
@@ -596,41 +594,31 @@ export default function CommunicationHistoryScreen(props) {
 
         let status = cus.status;
 
-        if (status == "未対応" && cus.SENPUKI_autofollow) {
-          status = "メールモンスター";
-        } else if (!status) {
-          status = "未対応";
-        }
+        var sql = `insert or replace into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
 
-        // 賃貸のみ
-        if (cus.category_number != "1") {
-
-          var sql = `insert or replace into customer_mst values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
-
-          var data = [
-            cus.customer_user_id,
-            cus.name,
-            cus.kana,
-            cus.communication_time,
-            cus.communication_title,
-            cus.line_note
-              ? cus.line_note
-              : cus.communication_note,
-            cus.mail1,
-            cus.mail2,
-            cus.mail3,
-            cus.line,
-            cus.staff_name,
-            cus.media,
-            cus.article_url,
-            cus.reverberation_user_id,
-            cus.coming_user_id,
-            cus.coming_day1,
-            status,
-          ];
-          
-          await db_write(sql,data);
-        }
+        var data = [
+          cus.customer_user_id,
+          cus.name,
+          cus.kana,
+          cus.communication_time,
+          cus.communication_title,
+          cus.line_note
+            ? cus.line_note
+            : cus.communication_note,
+          cus.mail1,
+          cus.mail2,
+          cus.mail3,
+          cus.line,
+          cus.staff_name,
+          cus.media,
+          cus.article_url,
+          cus.reverberation_user_id,
+          cus.coming_user_id,
+          cus.coming_day1,
+          status,
+        ];
+        
+        await db_write(sql,data);
 
       }
 
@@ -859,6 +847,29 @@ export default function CommunicationHistoryScreen(props) {
             size={35}
           />
           <Text style={styles.menutext}>設定</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menulist}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "Schedule",
+                  params: route.params,
+                  websocket: route.websocket,
+                  profile: route.profile,
+                },
+              ],
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name="clock"
+            color={"#1f2d53"}
+            size={35}
+          />
+          <Text style={styles.menutext}>スケジュール</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menulist}
