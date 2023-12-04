@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@dudigital/react-native-zoomable-view": "^1.1.4",
