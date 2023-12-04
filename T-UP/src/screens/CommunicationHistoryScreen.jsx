@@ -585,7 +585,13 @@ export default function CommunicationHistoryScreen(props) {
 
         var cus = customer[c];
 
-        if (cus.html_flg) {
+        // HTMLチェック
+        function htmlCheck(text) {
+          var htmlTagsRegex = /<[^>]*>/;
+          return htmlTagsRegex.test(text);
+        }
+
+        if (cus.html_flg || htmlCheck(cus.communication_note)) {
           cus.communication_note = cus.communication_note.replace(
             /<("[^"]*"|'[^']*'|[^'">])*>/g,
             ""
