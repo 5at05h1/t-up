@@ -606,6 +606,8 @@ export default function Schedule(props) {
                   const currentDate = selectedDate || date;
                   setDate(currentDate);
                 }}
+                textColor="#fff"
+                themeVariant="light"
               />
             </View>
           </Modal>

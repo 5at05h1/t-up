@@ -27,15 +27,15 @@ const db = SQLite.openDatabase("db");
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
 
-// // // 本番
-// // const adUnitId = Platform.OS === 'ios'
-// //   ? 'ca-app-pub-1369937549147272/4539839609'  // ios
-// //   : 'ca-app-pub-1369937549147272/1575561075'; // android
+// // 本番
+// const adUnitId = Platform.OS === 'ios'
+//   ? 'ca-app-pub-1369937549147272/4539839609'  // ios
+//   : 'ca-app-pub-1369937549147272/1575561075'; // android
 
 // // テスト
-// const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
-//   : 'ca-app-pub-3940256099942544/6300978111'; // android
+// // const adUnitId = Platform.OS === 'ios'
+// //   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
+// //   : 'ca-app-pub-3940256099942544/6300978111'; // android
 
 Notifications.setBadgeCountAsync(0);
 
