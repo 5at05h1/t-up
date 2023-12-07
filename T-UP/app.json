@@ -2,7 +2,7 @@
   "expo": {
     "name": "t-upApp",
     "slug": "t-upApp",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -24,7 +24,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.TUP-CRM",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.3.1",
+      "buildNumber": "2.3.2",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -39,7 +39,7 @@
       },
       "package": "com.TUP_CRM",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 20,
+      "versionCode": 21,
       "permissions": [
         "READ_CONTACTS",
         "READ_EXTERNAL_STORAGE",
@@ -62,7 +62,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "78b05ed6-d345-4784-9826-cff179b9cb1a"
+        "projectId": "43c7bbee-8ed4-45a8-b8af-d330e0f58781"
       }
     },
     "plugins": [
@@ -81,7 +81,7 @@
         }
       ]
     ],
-    "owner": "tc_ooishi"
+    "owner": "t-up"
   },
   "react-native-google-mobile-ads": {
     "android_app_id": "ca-app-pub-1369937549147272~6418447382",
