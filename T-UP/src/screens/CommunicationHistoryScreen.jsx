@@ -10,7 +10,7 @@ import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 import Loading from '../components/Loading';
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -27,15 +27,15 @@ const db = SQLite.openDatabase("db");
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
 
-// // 本番
-// const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-1369937549147272/4539839609'  // ios
-//   : 'ca-app-pub-1369937549147272/1575561075'; // android
+// 本番
+const adUnitId = Platform.OS === 'ios'
+  ? 'ca-app-pub-1369937549147272/4539839609'  // ios
+  : 'ca-app-pub-1369937549147272/1575561075'; // android
 
-// // テスト
-// // const adUnitId = Platform.OS === 'ios'
-// //   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
-// //   : 'ca-app-pub-3940256099942544/6300978111'; // android
+// テスト
+// const adUnitId = Platform.OS === 'ios'
+//   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
+//   : 'ca-app-pub-3940256099942544/6300978111'; // android
 
 Notifications.setBadgeCountAsync(0);
 
@@ -117,6 +117,10 @@ export default function CommunicationHistoryScreen(props) {
 
       Display(true);
 
+    } else if (route.reload == 1) {
+
+      onRefresh(true);
+
     } else {
 
       Display(false);
@@ -127,7 +131,6 @@ export default function CommunicationHistoryScreen(props) {
     const notificationInteractionSubscription = Notifications.addNotificationResponseReceivedListener(response => {
       if (response.notification.request.content.data.customer && global.sp_id) {
         const cus_data = response.notification.request.content.data.customer;
-        
         navigation.reset({
           index: 0,
           routes: [{
@@ -135,11 +138,6 @@ export default function CommunicationHistoryScreen(props) {
             params: route.params ,
             customer:cus_data.customer_id,
             websocket:route.websocket,
-            station:route.station,
-            address:route.address,
-            profile:route.profile,
-            staff:staffs,
-            fixed:noti_fixed,
             cus_name:cus_data.name,
           }],
         });
@@ -292,6 +290,7 @@ export default function CommunicationHistoryScreen(props) {
       const staff_ = await Insert_staff_list_db(json.staff);
 
       // ローカルDB用お客様情報＋最新のコミュニケーション
+      await Delete_customer_db(json.del_cus);
       await Insert_customer_db(json.search);
       await searchCustomer(staff_,true);
 
@@ -313,6 +312,7 @@ export default function CommunicationHistoryScreen(props) {
             title: "",
             mail_title: "",
             note: "",
+            html_flg:""
           });
         } else {
           f.value.map((v) => {
@@ -322,6 +322,7 @@ export default function CommunicationHistoryScreen(props) {
               title: v.title,
               mail_title: v.note.substring(0, v.note.indexOf("<[@]>")),
               note: v.note.substr(v.note.indexOf("<[@]>") + 5),
+              html_flg: v.html_flg
             });
           });
         }
@@ -408,6 +409,7 @@ export default function CommunicationHistoryScreen(props) {
     
     if (json != false) {
       // ローカルDB用お客様情報＋最新のコミュニケーション
+      await Delete_customer_db(json.del_cus);
       await Insert_customer_db(json.search);
       await searchCustomer(staff_value,false);
     }
@@ -446,8 +448,12 @@ export default function CommunicationHistoryScreen(props) {
     await onRefresh(false);
   };
   
-  const getCOM = useCallback(() => {
+  const getCOM = useCallback(async() => {
     
+    var sql = `select customer_id from customer_mst;`;
+    var customer_mst = await db_select(sql);
+    const customer_id_list = customer_mst!=false?customer_mst.map((c)=>c.customer_id):[];
+
     const signal = abortControllerRef.current.signal;
 
     return new Promise((resolve, reject)=>{
@@ -462,6 +468,7 @@ export default function CommunicationHistoryScreen(props) {
           pass: route.params.password,
           act: "customer_list",
           page:0,
+          customer_id_list:customer_id_list.join(),
         }),
         signal
       })
@@ -481,8 +488,12 @@ export default function CommunicationHistoryScreen(props) {
 
   },[abortControllerRef]);
 
-  const getCOMNEXT = useCallback((page) => {
+  const getCOMNEXT = useCallback(async(page) => {
     
+    var sql = `select customer_id from customer_mst;`;
+    var customer_mst = await db_select(sql);
+    const customer_id_list = customer_mst!=false?customer_mst.map((c)=>c.customer_id):[];
+
     return new Promise((resolve, reject)=>{
       fetch(domain + "batch_app/api_system_app.php?" + Date.now(), {
         method: "POST",
@@ -495,6 +506,7 @@ export default function CommunicationHistoryScreen(props) {
           pass: route.params.password,
           act: "customer_list",
           page:page,
+          customer_id_list:customer_id_list.join(),
         }),
       })
       .then((response) => response.json())
@@ -597,7 +609,7 @@ export default function CommunicationHistoryScreen(props) {
 
         if (cus.html_flg || htmlCheck(cus.communication_note)) {
           cus.communication_note = cus.communication_note.replace(
-            /<("[^"]*"|'[^']*'|[^'">])*>/g,
+            /(<("[^"]*"|'[^']*'|[^'">])*>|\n|\r)/g,
             ""
           );
         }
@@ -646,6 +658,19 @@ export default function CommunicationHistoryScreen(props) {
 
   }
   
+  // ローカルDBの削除対象顧客を削除する
+  async function Delete_customer_db(customer) {
+    if (customer.length > 0) {
+      for (var c in customer) {
+        const customer_id = customer[c];
+        var delcus1 = `DELETE FROM customer_mst WHERE customer_id = (?);`;
+        await db_write(delcus1,[customer_id]);
+        var delcus2 = `DELETE FROM communication_mst WHERE customer_id = (?);`;
+        await db_write(delcus2,[customer_id]);
+      }
+    }
+  }
+
   // 定型文データベース登録
   async function Insert_fixed_db(fixed) {
 
@@ -666,8 +691,8 @@ export default function CommunicationHistoryScreen(props) {
 
       for (var f=0;f<fixed.length;f++) {
         var fix_ = fixed[f];
-        var fixed_insert = `insert or replace into fixed_mst values (?,?,?,?,?);`;
-        var fixed_data = [fix_.fixed_id, fix_.category, fix_.title, fix_.mail_title, fix_.note];
+        var fixed_insert = `insert or replace into fixed_mst values (?,?,?,?,?,?);`;
+        var fixed_data = [fix_.fixed_id, fix_.category, fix_.title, fix_.mail_title, fix_.note,fix_.html_flg];
         await db_write(fixed_insert,fixed_data);
         APIfix.push(fix_.fixed_id);
       }
@@ -765,7 +790,7 @@ export default function CommunicationHistoryScreen(props) {
     
     for (var d=0;d<dbList.length;d++) {
       var table = dbList[d];
-      var delete_sql = `delete from ${table};`;
+      var delete_sql = `DROP TABLE ${table};`;
       const del_res = await db_write(delete_sql,[]);
       if (del_res) {
         console.log(`${table} 削除 成功`);
@@ -925,6 +950,16 @@ export default function CommunicationHistoryScreen(props) {
           data={memos}
           renderItem={({ item,index }) => {
             if (!item.del_flg) {
+              
+              var note = "";
+              if (item.title === "スタンプ") {
+                note = "スタンプを送信しました";
+              } else if (!item.note) {
+                note = item.title;
+              } else {
+                note = (item.note).replace(/(<("[^"]*"|'[^']*'|[^'">])*>|\n|\r)/g,"");
+              }
+
               return (
               <>
                 <TouchableOpacity
@@ -959,25 +994,19 @@ export default function CommunicationHistoryScreen(props) {
                       </Text>
                       <Text style={styles.name} numberOfLines={1}>
                         {item.name
-                          ? item.name.length < 10
+                          ? item.name.length < 15
                             ? item.name
-                            : item.name.substring(0, 10) + "..."
+                            : item.name.substring(0, 15) + "..."
                           : ""}
                       </Text>
                     </View>
                     <Text style={styles.date}>
                       {item.time ? item.time.slice(0, -3) : ""}
                     </Text>
-                    <Text style={styles.message} numberOfLines={1}>
-                      {item.title === "スタンプ"
-                        ? "スタンプを送信しました"
-                        : !item.note
-                        ? item.title
-                        : item.note}
-                    </Text>
+                    <Text style={styles.message} numberOfLines={1}>{note}</Text>
                   </View>
                 </TouchableOpacity>
-                {/* {index==4&&(
+                {index==4&&(
                   <BannerAd
                     unitId={adUnitId}
                     size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
@@ -985,7 +1014,7 @@ export default function CommunicationHistoryScreen(props) {
                       requestNonPersonalizedAdsOnly: true,
                     }}
                   />
-                )} */}
+                )}
                 </>
               );
             }

@@ -267,12 +267,30 @@ export default function Setting(props) {
       ),
     });
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
+    // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
+    const notificationInteractionSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+      if (response.notification.request.content.data.customer && global.sp_id) {
+        const cus_data = response.notification.request.content.data.customer;
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'TalkScreen' ,
+            params: route.params ,
+            customer:cus_data.customer_id,
+            websocket:route.websocket,
+            cus_name:cus_data.name,
+          }],
+        });
+        
+      }
+    })
+    
+    return () => {
+      backHandler.remove();
+      notificationInteractionSubscription.remove();
+    };
 
-    return () => backHandler.remove();
   }, []);
   
   async function Delete_staff_db(){
@@ -287,7 +305,7 @@ export default function Setting(props) {
     
     for (var d=0;d<dbList.length;d++) {
       var table = dbList[d];
-      var delete_sql = `delete from ${table};`;
+      var delete_sql = `DROP TABLE ${table};`;
       const del_res = await db_write(delete_sql,[]);
       if (del_res) {
         console.log(`${table} 削除 成功`);

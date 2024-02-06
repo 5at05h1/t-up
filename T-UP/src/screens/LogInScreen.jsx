@@ -25,7 +25,7 @@ global.sp_id = '';    // ログインID
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -43,7 +43,7 @@ export default function LogInScreen(props) {
   }
 
   const { navigation,route } = props;
-  const cus_notifications = route.params;
+  const [cus_notifications, setCus_notifications] = useState(null);
   
   const [isLoading, setLoading] = useState(false);
   const [id, setID] = useState('');
@@ -73,14 +73,7 @@ export default function LogInScreen(props) {
       if (response.notification.request.content.data.customer && !global.sp_id) {
     
         const cus_data = response.notification.request.content.data.customer;
-        
-        navigation.navigate(
-          'LogIn',
-          {
-            customer_id: cus_data.customer_id,
-            name: cus_data.name,
-          }
-        );
+        setCus_notifications(cus_data);
         
       }
     })
@@ -254,21 +247,23 @@ export default function LogInScreen(props) {
         setLoading(false);
 
         // ローカルサーバーのデータを更新(サーバーから取得)
-        getServerData(rocalDB[0]);
+        getServerData(rocalDB[0])
+        .then((result) => {
+          navigation.reset({
+            index: 0,
+            routes: [{
+              name: 'CommunicationHistory',
+              params: rocalDB[0],
+              websocket:new WebSocket(WS_URL),
+              station:station,
+              address:address,
+              flg:'ローカル',
+              previous:'LogIn',
+              notifications:cus_notifications?cus_notifications:null,
+            }],
+          });
+        })
         
-        navigation.reset({
-          index: 0,
-          routes: [{
-            name: 'CommunicationHistory',
-            params: rocalDB[0],
-            websocket:new WebSocket(WS_URL),
-            station:station,
-            address:address,
-            flg:'ローカル',
-            previous:'LogIn',
-            notifications:cus_notifications?cus_notifications:null,
-          }],
-        });
 
       } else if (rocalDB.length == 0 && ExpoPushToken) {
         
@@ -301,6 +296,7 @@ export default function LogInScreen(props) {
           const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/'
           
           const staff = json.staff;
+          const shops = json.shops2;
 
           const staff_data = [
             staff.account,
@@ -309,17 +305,17 @@ export default function LogInScreen(props) {
             staff.name_1,
             staff.name_2,
             staff.name,
-            staff.corporations_name,
+            shops.corporations_name,
             staff.setting_list,
             staff.app_token,
-            staff.system_mail,
-            staff.yahoomail,
-            staff.gmail,
-            staff.hotmail,
-            staff.outlook,
-            staff.softbank,
-            staff.icloud,
-            staff.original_mail,
+            shops.system_mail,
+            shops.yahoomail,
+            shops.gmail,
+            shops.hotmail,
+            shops.outlook,
+            shops.softbank,
+            shops.icloud,
+            shops.original_mail,
             staff.line_id,
             staff.mail_name,
             staff.mail1,
@@ -353,7 +349,7 @@ export default function LogInScreen(props) {
       }
     }
     
-  }, [station,address,rocalDB]);
+  }, [station,address,rocalDB,cus_notifications]);
   
   async function Insert_staff_db(account,pass,data){
 
@@ -370,65 +366,73 @@ export default function LogInScreen(props) {
   // サーバーからのデータを取得して、ローカルサーバーの中身を更新
   function getServerData(staff){
 
-    fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: JSON.stringify({
-        ID : staff.account,
-        pass : staff.password
+    return new Promise((resolve, reject)=>{
+      fetch(domain+'batch_app/api_system_app.php?'+Date.now(),
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        // PHPに送るデータ
+        body: JSON.stringify({
+          ID : staff.account,
+          pass : staff.password,
+          fc_flg: global.fc_flg
+        })
       })
-    })
-    .then((response) => response.json())
-    .then(async(json) => {
-      
-      const staff = json.staff;
-      
-      // ログインデータ保持用
-      global.sp_id = staff.account;
-      
-      // テーブルを空にする
-      await db_write(`delete from staff_mst;`,[]);     // スタッフ
-      
-      // スタッフ情報をサーバーから取得
-      const staff_data = [
-        staff.account,
-        staff.password,
-        staff.shop_id,
-        staff.name_1,
-        staff.name_2,
-        staff.name,
-        staff.corporations_name,
-        staff.setting_list,
-        staff.app_token,
-        staff.system_mail,
-        staff.yahoomail,
-        staff.gmail,
-        staff.hotmail,
-        staff.outlook,
-        staff.softbank,
-        staff.icloud,
-        staff.original_mail,
-        staff.line_id,
-        staff.mail_name,
-        staff.mail1,
-        staff.mail2,
-        staff.mail3,
-        staff.top_staff_list,
-        staff.setting_list7_mail,
-      ];
-      
-      await Insert_staff_db(staff.account,staff.password,staff_data);
+      .then((response) => response.json())
+      .then(async(json) => {
+        
+        const staff = json.staff;
+        const shops = json.shops2;
+        
+        // ログインデータ保持用
+        global.sp_id = staff.account;
 
-    })
-    .catch((error) => {
-      const errorMsg = "[※]自動ログインに失敗しました。";
-      Alert.alert(errorMsg);
-      console.log(error);
-    })
+        // テーブルを空にする
+        await db_write(`delete from staff_mst;`,[]);     // スタッフ
+
+        // スタッフ情報をサーバーから取得
+        const staff_data = [
+          staff.account,
+          staff.password,
+          staff.shop_id,
+          staff.name_1,
+          staff.name_2,
+          staff.name,
+          shops.corporations_name,
+          staff.setting_list,
+          staff.app_token,
+          shops.system_mail,
+          shops.yahoomail,
+          shops.gmail,
+          shops.hotmail,
+          shops.outlook,
+          shops.softbank,
+          shops.icloud,
+          shops.original_mail,
+          staff.line_id,
+          staff.mail_name,
+          staff.mail1,
+          staff.mail2,
+          staff.mail3,
+          staff.top_staff_list,
+          staff.setting_list7_mail,
+        ];
+          
+        await Insert_staff_db(staff.account,staff.password,staff_data);
+
+        resolve(true);
+
+      })
+      .catch((error) => {
+        const errorMsg = "[※]自動ログインに失敗しました。";
+        Alert.alert(errorMsg);
+        console.log(error)
+        resolve(false);
+      })
+    });
     
   }
   
@@ -507,6 +511,7 @@ export default function LogInScreen(props) {
       const WS_URL = 'ws://52.194.19.123:8080/ws/'+json.staff.shop_id+'/';
       
       const staff = json.staff;
+      const shops = json.shops2;
       
       const staff_data = [
         staff.account,
@@ -515,17 +520,17 @@ export default function LogInScreen(props) {
         staff.name_1,
         staff.name_2,
         staff.name,
-        staff.corporations_name,
+        shops.corporations_name,
         staff.setting_list,
         staff.app_token,
-        staff.system_mail,
-        staff.yahoomail,
-        staff.gmail,
-        staff.hotmail,
-        staff.outlook,
-        staff.softbank,
-        staff.icloud,
-        staff.original_mail,
+        shops.system_mail,
+        shops.yahoomail,
+        shops.gmail,
+        shops.hotmail,
+        shops.outlook,
+        shops.softbank,
+        shops.icloud,
+        shops.original_mail,
         staff.line_id,
         staff.mail_name,
         staff.mail1,

@@ -9,6 +9,8 @@ T-UP/*.key
 T-UP/*.mobileprovision
 T-UP/*.orig.*
 T-UP/web-build/
+T-UP/google-services.json
+T-UP/GoogleService-Info.plist
 
 # macOS
 T-UP/.DS_Store

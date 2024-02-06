@@ -7,7 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Notifications from 'expo-notifications';
-import * as Permissions from "expo-permissions";
+import * as Clipboard from 'expo-clipboard';
 import GestureRecognizer from 'react-native-swipe-gestures';
 
 import Loading from '../components/Loading';
@@ -53,6 +53,11 @@ export default function TalkScreen(props) {
   const [msgtext,setMsgtext] = useState('');
   const [subject,setSubject] = useState('');
   
+  // 返信用
+  const [note_ret,setNoto_ret] = useState('');
+  const [send_mail,setSend_mail] = useState('');
+  const [receive_mail,setReceive_mail] = useState('');
+
   const [add, setAdd] = useState([]);
   
   const [property,setProperty] = useState(false);
@@ -67,6 +72,8 @@ export default function TalkScreen(props) {
   
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
+  const [reload, setReload] = useState("");
+
   // 端末の戻るボタン
   const backAction = () => {
     if (!isLoading) {
@@ -84,7 +91,8 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    previous:'TalkScreen'
+                    previous:'TalkScreen',
+                    reload:reload
                   }],
                 });
               }
@@ -101,7 +109,8 @@ export default function TalkScreen(props) {
             name: 'CommunicationHistory' ,
             params: route.params,
             websocket:route.websocket,
-            previous:'TalkScreen'
+            previous:'TalkScreen',
+            reload:reload
           }],
         });
       }
@@ -135,7 +144,8 @@ export default function TalkScreen(props) {
                             name: 'CommunicationHistory' ,
                             params: route.params,
                             websocket:route.websocket,
-                            previous:'TalkScreen'
+                            previous:'TalkScreen',
+                            reload:reload
                           }],
                         });
                       }
@@ -152,7 +162,8 @@ export default function TalkScreen(props) {
                     name: 'CommunicationHistory' ,
                     params: route.params,
                     websocket:route.websocket,
-                    previous:'TalkScreen'
+                    previous:'TalkScreen',
+                    reload:reload
                   }],
                 });
               }
@@ -168,18 +179,118 @@ export default function TalkScreen(props) {
       backAction
     );
 
-    return () => backHandler.remove();
-  }, [msgtext,isLoading])
+    // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
+    const notificationInteractionSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+      if (response.notification.request.content.data.customer && global.sp_id) {
+        const cus_data = response.notification.request.content.data.customer;
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'TalkScreen' ,
+            params: route.params ,
+            customer:cus_data.customer_id,
+            websocket:route.websocket,
+            cus_name:cus_data.name,
+          }],
+        });
+        
+      }
+    })
+
+    return () => {
+      backHandler.remove();
+      notificationInteractionSubscription.remove();
+    };
+
+  }, [msgtext,isLoading,reload])
   
   useEffect(() => {
     
-    onRefresh(true);
+    Display();
     GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
     GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
     GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
 
   }, [])
   
+  async function Display() {
+
+    if (!route.customer) {
+
+      Alert.alert('','このお客様データは削除されています');
+      
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: 'CommunicationHistory' ,
+          params: route.params,
+          websocket:route.websocket,
+          websocket2: route.websocket2,
+          profile:route.profile,
+          previous:'TalkScreen'
+        }],
+      });
+
+      return;
+    }
+
+    var loadflg = false;
+
+    var sql = `select count(*) as count from communication_mst where customer_id = '${route.customer}';`;
+    var customer = await db_select(sql);
+    const cnt = customer[0]["count"];
+
+    if (cnt == 0) loadflg = true;
+
+    await getLocalDB(loadflg);
+    onRefresh(loadflg);
+
+  }
+
+  const getLocalDB = async(flg) => {
+
+    setLoading(true);
+
+    var sql = `select * from communication_mst where ( customer_id = '${route.customer}' ) order by time desc;`;
+    var talk_ = await db_select(sql);
+    if (talk_ != false) {
+      setTalk(talk_);
+    }
+
+    if (!flg) setLoading(false);
+
+    const staff_mst = await GetDB('staff_mst');
+    if (staff_mst != false) setStaff(staff_mst[0]);
+
+    var sql = `select * from customer_mst where ( customer_id = '${route.customer}' );`;
+    var customer_mst = await db_select(sql);
+    if (customer_mst != false) {
+      const cus = customer_mst[0];
+      const cusData = {
+        line: cus["line"],
+        main: {
+          customer_id: cus["customer_id"],
+          name: cus["name"],
+          tel1: cus["tel1"],
+          mail1: cus["mail1"],
+          mail2: cus["mail2"],
+          mail3: cus["mail3"],
+          status: cus["status"],
+          brower_mail: "",
+        },
+        reverberation: {
+          user_id: cus["reverberation_user_id"],
+          staff_name: cus["staff_name"],
+          media: cus["media"],
+          inquiry_day: "",
+        }
+      }
+      setCustomer(cusData);
+    }
+
+  }
+
   const onRefresh = useCallback(async(flg) => {
 
     console.log('--------------------------');
@@ -196,6 +307,26 @@ export default function TalkScreen(props) {
     if (json != false) {
       
       setTalk(json['communication']);
+      
+      if (json['customer_data']['main'] == null) {
+
+        Alert.alert('','このお客様データは削除されています');
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'CommunicationHistory' ,
+            params: route.params,
+            websocket:route.websocket,
+            websocket2: route.websocket2,
+            profile:route.profile,
+            previous:'TalkScreen'
+          }],
+        });
+
+        return;
+      }
+
       setCustomer(json['customer_data']);
       setStaff(json['staff']);
       setReservation(json['customer_reservation']);
@@ -460,7 +591,7 @@ export default function TalkScreen(props) {
           continue talklist;
         }
 
-        var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?);`;
+        var sql = `insert or replace into communication_mst values (?,?,?,?,?,?,?,?,?,?,?,?);`;
 
         var data = [
           com.communication_id,
@@ -472,7 +603,9 @@ export default function TalkScreen(props) {
           com.line_note,
           com.file_path,
           com.status,
-          com.html_flg
+          com.html_flg,
+          com.receive_mail,
+          com.send_mail,
         ];
 
         count_++;
@@ -566,6 +699,7 @@ export default function TalkScreen(props) {
           setLoading(false);
           setMessages(GiftedChat.append(messages, newMessage));
           setTalk(json['communication']);
+        setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -602,6 +736,7 @@ export default function TalkScreen(props) {
           Alert.alert('登録しました');
           setMessages(GiftedChat.append(messages, newMessage));
           setTalk(json['communication']);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -666,6 +801,7 @@ export default function TalkScreen(props) {
           
           setReservation(json['customer_reservation']);
           setTalk(json['communication']);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -782,6 +918,7 @@ export default function TalkScreen(props) {
             )
           );
           setTalk(json['communication']);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -851,6 +988,7 @@ export default function TalkScreen(props) {
             )
           );
           setTalk(json['communication']);
+          setReload(1);
         })
         .catch((error) => {
           console.log(error)
@@ -941,8 +1079,8 @@ export default function TalkScreen(props) {
   const [filteredFixed, setFilteredFixed] = useState([]);
 
   // リストからHTML用の定型文をフィルタリング
-  const filterFixedByCategory = (category) => {
-    const filtered = fixed.filter((obj) => obj.category !== category);
+  const filterFixedByCategory = () => {
+    const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
   }
 
@@ -950,7 +1088,7 @@ export default function TalkScreen(props) {
     if (fixed.length != 0) {
       if (modal4) {
         // チャット画面の入力欄に直接定型文を挿入する時は'HTML用'の定型文は表示しない
-        filterFixedByCategory('HTML用');
+        filterFixedByCategory();
       } else {
         setFilteredFixed(fixed);
       }
@@ -967,28 +1105,107 @@ export default function TalkScreen(props) {
     }
   }
   
+  useEffect(() => {
+    if (modal1 == false) {
+      setSubject("");
+      setNoto_ret("");
+      setSend_mail("");
+      setReceive_mail("");
+    }
+  }, [modal1]);
+  
+  const onLongPress = (context, message) => {
+    var options = [];
+
+    if (message.user.status == 'メール受信') {
+      options = ['返信','コピー','キャンセル'];
+    } else {
+      options = ['コピー','キャンセル'];
+    }
+
+    const cancelButtonIndex = options.length - 1;
+
+    context.actionSheet().showActionSheetWithOptions({
+      options,
+      cancelButtonIndex
+    }, (buttonIndex) => {
+      switch (options[buttonIndex]) {
+        case '返信':
+
+          var sql = `select * from communication_mst where customer_id = '${route.customer}' and communication_id = '${message._id}';`;
+          db_select(sql).then(function(data) {
+            if (data != false) {
+              var result = data[0];
+
+              // 件名
+              setSubject("Re:"+result.title);
+
+              // 本文
+              var note  = "-----Original Message-----\n";
+              note += "Sent:"+result.time+"\n";
+              note += "Subject:"+result.title+"\n\n";
+              note += result.note;
+              setNoto_ret(note);
+
+              // 送信元（お客様のアドレス）
+              setSend_mail(result.send_mail);
+
+              // 宛先（スタッフ）
+              setReceive_mail(result.receive_mail);
+
+              setMenu(true);
+              setModal1(true);
+            } else {
+              
+              // 件名
+              setSubject("Re:"+message.user.title);
+
+              // 本文
+              var note  = "-----Original Message-----\n";
+              note += "Sent:"+message.createdAt+"\n";
+              note += "Subject:"+message.user.title+"\n\n";
+              note += message.text;
+              setNoto_ret(note);
+              
+              setMenu(true);
+              setModal1(true);
+            }
+          })
+
+          break;
+        case 'コピー':
+          Clipboard.setStringAsync(message.text);
+          break;
+        default:
+          break;
+      }
+    });
+
+  }
   
   return (
     <>
     <Loading isLoading={isLoading} />
-    <MyModal6
-      isVisible={modal6}
-      route={route}
-      overlap={overlap}
-      navigation={navigation}
-      tantou={tantou}
-      staff={route.staff}
-      cus={customer}
-    />
-    <MyModal5
-      isVisible={modal6?false:modal5}
-      tantou={tantou}
-      route={route}
-      staff={route.staff}
-      navigation={navigation}
-      cus={customer}
-      overlap={overlap}
-    />
+      {(typeof customer === "object" && ("beginning_communication" in customer) && (customer.beginning_communication != null)) && (
+        <>
+        <MyModal6
+          isVisible={modal6}
+          route={route}
+          overlap={overlap}
+          navigation={navigation}
+          tantou={tantou}
+          cus={customer}
+        />
+        <MyModal5
+          isVisible={modal6?false:modal5}
+          tantou={tantou}
+          route={route}
+          navigation={navigation}
+          cus={customer}
+          overlap={overlap}
+        />
+        </>
+      )}
     <GiftedChat
       messages={messages}
       
@@ -1014,6 +1231,8 @@ export default function TalkScreen(props) {
         );
       }}
       renderBubble={renderBubble}
+      onPress={()=>{}}
+      onLongPress={onLongPress}
       renderUsernameOnMessage={false}
       renderStatus={true}
       renderTitle={true}
@@ -1139,6 +1358,8 @@ export default function TalkScreen(props) {
               ]:[]}
               setMail={setMail}
               subject={subject}
+              note_ret={note_ret}
+              send_mail={send_mail}
               route={route}
               onSend={onSend}
               property={property}
@@ -1157,7 +1378,19 @@ export default function TalkScreen(props) {
                 customer.reverberation.article_url,
                 chatbot
               ]:[]}
-              mail_select={staff.mail_select}
+              mail_set={
+                receive_mail?
+                {
+                  brower_mail:receive_mail,
+                  mail_select:staff.mail_select,
+                }:
+                customer.main?
+                {
+                  brower_mail:customer.main.brower_mail,
+                  mail_select:staff.mail_select,
+                }
+                :
+                ''}
               options={video_option}
               options2={options}
             />

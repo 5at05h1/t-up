@@ -1,6 +1,6 @@
 import React,{ useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking, TouchableWithoutFeedback
+  StyleSheet, TouchableOpacity, Text, View, TextInput, Switch, Alert, Platform, Button, Image, ScrollView, FlatList, LogBox, KeyboardAvoidingView, Linking, TouchableWithoutFeedback, Keyboard
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -20,7 +20,7 @@ import ColorPicker from 'react-native-color-picker-ios-android';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // DB接続
-import { db } from './Databace';
+import { db,db_select } from './Databace';
 
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
@@ -72,7 +72,7 @@ export function MyModal0(props){
 
 export function MyModal1(props){
   
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_select,options,options2 } = props;
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2,send_mail } = props;
   
   const [res,setRes] = useState(props.reservation);
   const editorRef = useRef();
@@ -87,9 +87,30 @@ export function MyModal1(props){
   const [draft, setDraft] = useState(null);
   const [note, setNote] = useState('');
   
+  useEffect(() => {
+    if (note_ret != "") {
+      setNote(note_ret);
+    }
+  }, [note_ret])
+
   const [open, setOpen] = useState(false);
   const [cus_value, setCus_Value] = useState('');
   
+  useEffect(() => {
+    // 宛先
+    if (cus_mail.length>0) {
+      if (send_mail != "") {
+        if (cus_mail.includes(send_mail)) {
+          setCus_Value(send_mail);
+        } else {
+          setCus_Value(cus_mail[0]);
+        }
+      } else {
+        setCus_Value(cus_mail[0]);
+      }
+    }
+  }, [cus_mail,send_mail])
+
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
   const items1 = cus_mail.filter(Boolean).map((item) => {
@@ -120,15 +141,15 @@ export function MyModal1(props){
   const [filteredFixed, setFilteredFixed] = useState([]);
 
   // リストからHTML用の定型文をフィルタリング
-  const filterFixedByCategory = (category) => {
-    const filtered = fixed.filter((obj) => obj.category !== category);
+  const filterFixedByCategory = () => {
+    const filtered = fixed.filter((obj) => obj.html_flg != '1');
     setFilteredFixed(filtered);
   }
 
   useEffect(() => {
     if (mail_format === '0') {
       // 形式がテキストの時は'HTML用'の定型文は表示しない
-      filterFixedByCategory('HTML用');
+      filterFixedByCategory();
     } else {
       setFilteredFixed(fixed);
     }
@@ -214,7 +235,7 @@ export function MyModal1(props){
     if (shop_mail.length>0) {
         
       // 既存のメールアドレス
-      setShop_Value(mail_select?mail_select:shop_mail[0]);
+      setShop_Value(mail_set.mail_select?mail_set.mail_select:shop_mail[0]);
       
       // 送信元メールアドレスをアドレスによってGmailに自動変更
       if(shop_mail[2] && cus_mail.length>0) {
@@ -395,6 +416,16 @@ export function MyModal1(props){
     setNote(note?note+row:row);
     
 	}
+  
+  const [option, setOption] = useState(false);
+  
+  useEffect(() => {
+    
+    if (options) {
+      setOption(options);
+    }
+    
+  }, [options])
   
   // ファイル選択
   const [filename,setFilename] = useState('');
@@ -627,15 +658,15 @@ export function MyModal1(props){
   
   const onClose = () => {
     props.setModal1(false)
-    setNote('');
-    setCus_Value(cus_mail[0]);
-    setShop_Value(shop_mail[0]);
-    setMail_subject('');
-    setIsEnabled(false);
-    setCheck(false);
-    setFilename('');
-    setFiledata(null);
-    setInputCursorPosition(null);
+    // setNote('');
+    // setCus_Value(cus_mail[0]);
+    // setShop_Value(shop_mail[0]);
+    // setMail_subject('');
+    // setIsEnabled(false);
+    // setCheck(false);
+    // setFilename('');
+    // setFiledata(null);
+    // setInputCursorPosition(null);
   }
   
   const img_Delete = () => {
@@ -816,6 +847,22 @@ export function MyModal1(props){
     }
   }, [textColor])
 
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   return (
     <Modal
       isVisible={isVisible}
@@ -825,7 +872,9 @@ export function MyModal1(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
-      onBackdropPress={onClose}
+      onBackdropPress={()=>{
+        keyboardStatus?Keyboard.dismiss():onClose()
+      }}
     >
       <MyModal3 
         isVisible={Property}
@@ -854,223 +903,219 @@ export function MyModal1(props){
         mail_format={mail_format}
         editorRef={editorRef}
       />
-      <View style={[styles.sydemenu,{top: Platform.OS === "ios" ? 20 : 0}]}>
-        <TouchableOpacity
-          style={styles.menucircle}
-          onPress={openProperty}
-        >
-          <Feather name='home' color='#1f2d53' size={28} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menucircle}
-          onPress={openFixed}
-        >
-          <Feather name='file-text' color='#1f2d53' size={28} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={options?styles.menucircle:{display:"none"}}
-          onPress={() => {openOnline_call(route.customer)}}
-        >
-          <Feather name='video' color='#1f2d53' size={28} />
-        </TouchableOpacity>
-      </View>
-      <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={[{height:650},styles.modalInner]}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <View style={styles.sydemenu}>
+          <TouchableOpacity
+            style={[styles.menucircle,{marginLeft:0}]}
+            onPress={openProperty}
+          >
+            <Feather name='home' color='#1f2d53' size={28} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menucircle}
+            onPress={openFixed}
+          >
+            <Feather name='file-text' color='#1f2d53' size={28} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={option?styles.menucircle:{display:"none"}}
+            onPress={() => {openOnline_call(route.customer)}}
+          >
+            <Feather name='video' color='#1f2d53' size={28} />
+          </TouchableOpacity>
+        </View>
+        <View style={[{height:"90%",marginTop:20},styles.modalInner]}>
           <TouchableOpacity
             style={styles.close}
             onPress={onClose}
           >
             <Feather name='x-circle' color='gray' size={35} />
           </TouchableOpacity>
-          <View style={styles.form}>
-            {/* <ScrollView 
-              style={{height:Platform.OS === "ios" ? 400 : 500}}
-            > */}
+          <View style={[styles.form,{height:'100%',paddingTop:50,paddingBottom:20}]}>
             <TouchableWithoutFeedback
               disabled={disabled}
               onPress={keyboardClose}
             >
-              <View>
-                <FlatList
-                  style={{height: mail_format == '1' ? 200 : 500}}
-                  data={[(
-                    <>
-                      {rrr()}
-                      <Text style={styles.label}>宛先</Text>
-                      <DropDownPicker
-                        open={open}
-                        value={cus_value}
-                        items={items1}
-                        setOpen={setOpen}
-                        setValue={setCus_Value}
-                        style={styles.inputInner}
-                        placeholder = {'----------------'}
-                        zIndex={101}
-                        translation={{
-                          NOTHING_TO_SHOW: "メールアドレスが登録されていません"
-                        }}
-                        onClose={() => {setAuto_gmail(1)}}
-                      />
-                      <Text style={styles.label}>送信元</Text>
-                      <DropDownPicker
-                        open={open2}
-                        value={shop_value}
-                        items={items2}
-                        setOpen={setOpen2}
-                        setValue={setShop_Value}
-                        style={styles.inputInner}
-                        placeholder={'----------------'}
-                        zIndex={100}
-                      />
-                      {options2 && options2.includes('1') && (
-                        <>
-                          <Text style={styles.label}>形式</Text>
-                          <View style={{ zIndex: 99 }}>
-                            <DropDownPicker
-                              open={open3}
-                              value={mail_format}
-                              items={items3}
-                              setOpen={setOpen3}
-                              style={[styles.inputInner,{width: 200}]}
-                              dropDownContainerStyle={{width: 200}}
-                              placeholder={'----------------'}
-                              onOpen={() => {
-                                setOpen3(!open3);
-                              }}
-                              onSelectItem={(item)=>changeMailFormat(item.value)}
-                            />
-                          </View>
-                        </>
-                      )}
-                      <View style={styles.input}>
-                        <Text style={styles.label}>件名</Text>
-                        <TextInput
-                          onChangeText={(text) => setMail_subject(text)}
-                          value={mail_subject}
-                          style={styles.inputInner}
-                        />
-                      </View>
-                      <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
-                        <TouchableOpacity onPress={pickDocument} style={styles.file}>
-                          <Text>ファイル添付</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={pickImage} style={styles.file}>
-                          <Text>画像添付</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
-                        <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
-                          <Feather name='x-circle' color='gray' size={25} />
-                        </TouchableOpacity>
-                        <Text>{filename}</Text>
-                      </View>
-                      <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
-                      <View zIndex={99}>{mail_reservation()}</View>
-                      <View style={styles.input}>
-                        {mail_format !== '1' ? (
-                          <>
-                            <Text style={styles.label}>内容詳細</Text>
-                            <TextInput
-                              onChangeText={(text) => {setNote(text)}}
-                              value={note}
-                              style={styles.textarea}
-                              multiline={true}
-                              disableFullscreenUI={true}
-                              numberOfLines={11}
-                              onSelectionChange={(event) => {setInputCursorPosition(event.nativeEvent.selection);}}
-                            />
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                      </View>
-                    </>
-                  )]}
-                  renderItem={({ item }) => (
-                    <>{item}</>
-                  )}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-            {mail_format == '1' ? (
-              <>
-                <MyModal8 
-                  isVisible={color}
-                  openTextColor={openTextColor}
-                  setTextColor={setTextColor}
-                  textColor={textColor}
-                />
-                <View style={[{marginBottom: 5,flexDirection: 'row',alignItems: 'center'}]}>
-                  <Text style={styles.label}>内容詳細</Text>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {rrr()}
+                <Text style={styles.label}>宛先</Text>
+                <View style={{ zIndex: 101 }}>
+                  <DropDownPicker
+                    open={open}
+                    value={cus_value}
+                    items={items1}
+                    setOpen={setOpen}
+                    setValue={setCus_Value}
+                    style={styles.inputInner}
+                    placeholder={'----------------'}
+                    translation={{
+                      NOTHING_TO_SHOW: "メールアドレスが登録されていません"
+                    }}
+                    onSelectItem={() => {setAuto_gmail(1)}}
+                    onOpen={() => {
+                      setOpen2(false);
+                      setOp(false);
+                    }}
+                  />
                 </View>
-                <RichToolbar
-                  editor={editorRef}
-                  iconTint={"black"}
-                  selectedIconTint={"white"}
-                  actions={[
-                    actions.keyboard,
-                    actions.undo,
-                    actions.redo,
-                    actions.setBold,
-                    actions.setItalic,
-                    actions.setUnderline,
-                    actions.insertLine,
-                    actions.setStrikethrough,
-                    'fontSize_add',
-                    'fontSize_pull',
-                    'ForeColor',
-                    actions.indent,
-                    actions.outdent,
-                    actions.alignLeft,
-                    actions.alignCenter,
-                    actions.alignRight,
-                    actions.alignFull,
-                    actions.setSubscript,
-                    actions.setSuperscript,
-                    actions.checkboxList,
-                  ]}
-                  iconMap={{
-                    fontSize_add: ({ tintColor }) => (
-                      <TouchableOpacity onPress={()=>fontSize(true)}>
-                        <MaterialCommunityIcons name="format-font-size-increase" size={24} color={tintColor} />
-                      </TouchableOpacity>
-                    ),
-                    fontSize_pull: ({ tintColor }) => (
-                      <TouchableOpacity onPress={()=>fontSize(false)}>
-                        <MaterialCommunityIcons name="format-font-size-decrease" size={24} color={tintColor} />
-                      </TouchableOpacity>
-                    ),
-                    ForeColor: ({ tintColor }) => (
-                      <TouchableOpacity onPress={openTextColor}>
-                        <MaterialIcons name="format-color-text" size={24} color={tintColor} />
-                      </TouchableOpacity>
-                    ),
-                  }}
-                />
-                <RichEditor
-                  ref={editorRef}
-                  style={styles.editor}
-                  onChange={(text) => noteEdit(text)}
-                  initialHeight={220}
-                  onMessage={(data)=>{
-                    var txt = data.data;
-                    var check_txt = '';
-                    if (txt.length > 5) {
-                      check_txt = txt.slice(-5);
-                    } else {
-                      check_txt = txt;
-                    }
-                    setInputCursorPosition(check_txt.trim());
-                  }}
-                />
-              </>
-            ) : (
-              <></>
-            )}
-            {/* </ScrollView> */}
-            <View style={{flexDirection: 'row',alignSelf: 'center',marginBottom:10}}>
+                <Text style={styles.label}>送信元</Text>
+                <View style={{ zIndex: 100 }}>
+                  <DropDownPicker
+                    open={open2}
+                    value={shop_value}
+                    items={items2}
+                    setOpen={setOpen2}
+                    setValue={setShop_Value}
+                    style={styles.inputInner}
+                    placeholder={'----------------'}
+                    onOpen={() => {
+                      setOpen(false);
+                      setOp(false);
+                    }}
+                  />
+                </View>
+                {options2 && options2.includes('1') && (
+                  <>
+                    <Text style={styles.label}>形式</Text>
+                    <View style={{ zIndex: 99 }}>
+                      <DropDownPicker
+                        open={open3}
+                        value={mail_format}
+                        items={items3}
+                        setOpen={setOpen3}
+                        // setValue={setMail_Format}
+                        style={[styles.inputInner,{width: 200}]}
+                        dropDownContainerStyle={{width: 200}}
+                        placeholder={'----------------'}
+                        onOpen={() => {
+                          setOpen3(!open3);
+                        }}
+                        onSelectItem={(item)=>changeMailFormat(item.value)}
+                      />
+                    </View>
+                  </>
+                )}
+                <View style={styles.input}>
+                  <Text style={styles.label}>件名</Text>
+                  <TextInput
+                    onChangeText={(text) => setMail_subject(text)}
+                    value={mail_subject}
+                    style={styles.inputInner}
+                  />
+                </View>
+                <View style={[styles.input,{flexDirection: 'row',alignItems: 'center'}]}>
+                  <TouchableOpacity onPress={pickDocument} style={styles.file}>
+                    <Text>ファイル添付</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={pickImage} style={styles.file}>
+                    <Text>画像添付</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={filename?{flexDirection: 'row',marginVertical:5}:{display:'none'}}>
+                  <TouchableOpacity onPress={img_Delete} style={filename?{marginHorizontal:5}:{display:'none'}}>
+                    <Feather name='x-circle' color='gray' size={25} />
+                  </TouchableOpacity>
+                  <Text>{filename}</Text>
+                </View>
+                <Text style={styles.inlabel}>※携帯電話に送る際は2MB以下にしてください</Text>
+                <View zIndex={99}>{mail_reservation()}</View>
+                <View style={styles.input}>
+                  {mail_format !== '1' ? (
+                    <>
+                      <Text style={styles.label}>内容詳細</Text>
+                      <TextInput
+                        onChangeText={(text) => {setNote(text)}}
+                        value={note}
+                        style={styles.mail_textarea}
+                        multiline={true}
+                        disableFullscreenUI={true}
+                        numberOfLines={11}
+                        onSelectionChange={(event) => {setInputCursorPosition(event.nativeEvent.selection);}}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <MyModal7 
+                        isVisible={color}
+                        openTextColor={openTextColor}
+                        setTextColor={setTextColor}
+                        textColor={textColor}
+                      />
+                      <View style={[{marginBottom: 5,flexDirection: 'row',alignItems: 'center'}]}>
+                        <Text style={styles.label}>内容詳細</Text>
+                      </View>
+                      <RichToolbar
+                        editor={editorRef}
+                        iconTint={"black"}
+                        selectedIconTint={"white"}
+                        actions={[
+                          actions.keyboard,
+                          actions.undo,
+                          actions.redo,
+                          actions.setBold,
+                          actions.setItalic,
+                          actions.setUnderline,
+                          actions.insertLine,
+                          actions.setStrikethrough,
+                          'fontSize_add',
+                          'fontSize_pull',
+                          'ForeColor',
+                          actions.indent,
+                          actions.outdent,
+                          actions.alignLeft,
+                          actions.alignCenter,
+                          actions.alignRight,
+                          actions.alignFull,
+                          actions.setSubscript,
+                          actions.setSuperscript,
+                          actions.checkboxList,
+                        ]}
+                        iconMap={{
+                          fontSize_add: ({ tintColor }) => (
+                            <TouchableOpacity onPress={()=>fontSize(true)}>
+                              <MaterialCommunityIcons name="format-font-size-increase" size={24} color={tintColor} />
+                            </TouchableOpacity>
+                          ),
+                          fontSize_pull: ({ tintColor }) => (
+                            <TouchableOpacity onPress={()=>fontSize(false)}>
+                              <MaterialCommunityIcons name="format-font-size-decrease" size={24} color={tintColor} />
+                            </TouchableOpacity>
+                          ),
+                          ForeColor: ({ tintColor }) => (
+                            <TouchableOpacity onPress={openTextColor}>
+                              <MaterialIcons name="format-color-text" size={24} color={tintColor} />
+                            </TouchableOpacity>
+                          ),
+                        }}
+                      />
+                      <RichEditor
+                        initialContentHTML={note!=''?note:''}
+                        ref={editorRef}
+                        style={styles.editor}
+                        onChange={(text) => noteEdit(text)}
+                        initialHeight={220}
+                        onMessage={(data)=>{
+                          var txt = data.data;
+                          var check_txt = '';
+                          if (txt.length > 5) {
+                            check_txt = txt.slice(-5);
+                          } else {
+                            check_txt = txt;
+                          }
+                          setInputCursorPosition(check_txt.trim());
+                        }}
+                      />
+                    </>
+                  )}
+                </View>
+              </ScrollView>
+            </TouchableWithoutFeedback>
+            <View style={{flexDirection: 'row',alignSelf: 'center'}}>
+              <TouchableOpacity onPress={onClose} style={styles.close2}>
+                <Text>閉じる</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={onDraft} style={styles.draft}>
-                <Text>下書き保存</Text>
+                <Text style={{fontSize:12}}>下書き保存</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onSubmit} style={styles.submit}>
                 <Text style={styles.submitText}>{isEnabled||checked?"予　約":"送　信"}</Text>
@@ -1199,6 +1244,22 @@ export function MyModal2(props){
     }
   }
   
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   return (
     <Modal
       isVisible={isVisible}
@@ -1208,7 +1269,9 @@ export function MyModal2(props){
       animationIn={'slideInDown'}
       animationOut={'slideOutUp'}
       onModalHide={() => {setCon_flg(false)}}
-      onBackdropPress={onClose}
+      onBackdropPress={()=>{
+        keyboardStatus?Keyboard.dismiss():onClose()
+      }}
     >
     <KeyboardAvoidingView  behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={[{height:500},styles.bottom,styles.modalInner]}>
@@ -1843,12 +1906,14 @@ export function MyModal3(props){
   }
   
   useEffect(() => {
-    if(props.setMsgtext) {
-      props.setMsgtext(insertMsg);
-    } else if (props.setNote) {
-      props.setNote(insertMsg);
-      if (mail_format == '1' && insertMsg) {
-        editorRef.current.setContentHTML(insertMsg);
+    if (insertMsg) {
+      if(props.setMsgtext) {
+        props.setMsgtext(insertMsg);
+      } else if (props.setNote) {
+        props.setNote(insertMsg);
+        if (mail_format == '1' && insertMsg) {
+          editorRef.current.setContentHTML(insertMsg);
+        }
       }
     }
   },[insertMsg])
@@ -2529,7 +2594,7 @@ export function MyModal4(props){
 
 export function MyModal5(props){
   
-  const { isVisible,tantou,route,staff,navigation,cus,overlap } = props;
+  const { isVisible,tantou,route,navigation,cus,overlap } = props;
   
   const [pattern,setPattern] = useState('');
   const [close,setClose] = useState(false);
@@ -2555,14 +2620,20 @@ export function MyModal5(props){
   
   useEffect(() => {
     
-    setStaffs(staff);
-    setClose(isVisible);
-    
-    staff.map((s) => {
-      if (route.params.account == s.account) {
-        setStaff_Value(s.account)
+    var sql = `select * from staff_list where (account != 'all');`;
+    db_select(sql).then(function(staff){
+      if (staff != false) {
+        setStaffs(staff);
+      
+        staff.map((s) => {
+          if (route.params.account == s.account) {
+            setStaff_Value(s.account);
+          }
+        })
       }
     })
+
+    setClose(isVisible);
     
     if (cus) {
       
@@ -2588,7 +2659,7 @@ export function MyModal5(props){
       
     }
     
-  }, [staff,isVisible,cus])
+  }, [isVisible,cus])
   
   function setView(cus,pattern) {
     
@@ -2783,7 +2854,7 @@ export function MyModal5(props){
           {setView(cus,pattern)}
         </View>
         <View style={styles.overlap_btnwrap}>
-          <View style={{flexDirection: 'row'}}>
+          <View style={{flexDirection: 'row',alignSelf:'center'}}>
           <TouchableOpacity onPress={() => setClose(false)} style={styles.draft}>
             <Text>戻る</Text>
           </TouchableOpacity>
@@ -2791,7 +2862,7 @@ export function MyModal5(props){
             <Text style={styles.submitText}>確　定</Text>
           </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={changeShop} style={!overlap?{display:'none'}:overlap.group?[styles.submit,{marginTop:5,width:210}]:{display:'none'}}>
+          <TouchableOpacity onPress={changeShop} style={!overlap?{display:'none'}:overlap.group?[styles.submit,{marginTop:5,width:160}]:{display:'none'}}>
             <Text style={styles.submitText}>他グループ店振替</Text>
           </TouchableOpacity>
         </View>
@@ -2802,7 +2873,7 @@ export function MyModal5(props){
 
 export function MyModal6(props){
   
-  const { isVisible,overlap,route,navigation,staff,tantou,cus } = props;
+  const { isVisible,overlap,route,navigation,tantou,cus } = props;
   
   const [close,setClose] = useState(false);
   const [customer, setCustomer] = useState([]);
@@ -3100,7 +3171,6 @@ export function MyModal6(props){
       <MyModal5
         isVisible={modal5}
         route={route}
-        staff={staff}
         navigation={navigation}
         tantou={tantou}
         cus={cus}
@@ -3136,7 +3206,7 @@ export function MyModal6(props){
           {setView(num,ol)}
         </View>
         <View style={styles.overlap_btnwrap}>
-          <View style={{flexDirection: 'row'}}>
+          <View style={{flexDirection: 'row',alignSelf:'center'}}>
             <TouchableOpacity onPress={noSubmit} style={styles.draft}>
               <Text>まとめない</Text>
             </TouchableOpacity>
@@ -3144,7 +3214,7 @@ export function MyModal6(props){
               <Text style={styles.submitText}>まとめる</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={changeShop} style={!overlap?{display:'none'}:overlap.group?[styles.submit,{marginTop:5,width:210}]:{display:'none'}}>
+          <TouchableOpacity onPress={changeShop} style={!overlap?{display:'none'}:overlap.group?[styles.submit,{marginTop:5,width:160}]:{display:'none'}}>
             <Text style={styles.submitText}>他グループ店振替</Text>
           </TouchableOpacity>
         </View>
@@ -3388,6 +3458,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 8,
   },
+  mail_textarea: {
+    minHeight: 200,
+    height: 'auto',
+    paddingVertical:10,
+    paddingHorizontal:5,
+    borderColor: '#1f2d53',
+    fontSize:16,
+    borderWidth: 1.5,
+    borderRadius: 8,
+    textAlignVertical: 'top'
+  },
   textarea: {
     height:200,
     paddingVertical:10,
@@ -3409,13 +3490,47 @@ const styles = StyleSheet.create({
     borderColor:'#1f2d53',
     marginRight:10,
   },
+  font:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  btn:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  btnBox: {
+    width:35,
+    height:35,
+    backgroundColor:'#fafafa',
+    borderWidth:1,
+    borderColor:'#191970',
+    borderRadius:8,
+    marginHorizontal:3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  close2:{
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor:"#dbdbdb",
+    marginTop:15,
+    borderRadius: 8,
+    width:75,
+    height:40,
+    marginRight:10,
+  },
   draft:{
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop:10,
+    marginTop:15,
     borderRadius: 8,
-    width:100,
+    width:75,
     height:40,
     borderWidth:1,
     borderColor:'#1f2d53',
@@ -3425,11 +3540,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop:10,
+    marginTop:15,
     borderRadius: 8,
-    width:100,
+    width:75,
     height:40,
-    backgroundColor:'#1f2d53',
+    backgroundColor:'#47a9ce',
   },
   submitText: {
     fontSize:16,
@@ -3438,7 +3553,7 @@ const styles = StyleSheet.create({
   delete:{
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:5,
+    marginTop:10,
     borderRadius: 8,
     width:100,
     height:40,
@@ -3515,8 +3630,13 @@ const styles = StyleSheet.create({
   },
   close: {
     position: 'absolute',
-    top:10,
-    right:15,
+    top:0,
+    right:0,
+    width:50,
+    height:50,
+    justifyContent:'center',
+    alignItems:'center',
+    zIndex:1000
   },
   line: {
     backgroundColor: "#ffffff",
@@ -3536,6 +3656,17 @@ const styles = StyleSheet.create({
     marginTop:30,
     marginHorizontal:10,
   },
+  styleBox: {
+    width:35,
+    height:35,
+    backgroundColor:'#fafafa',
+    borderWidth:1,
+    borderColor:'#1f2d53',
+    borderRadius:10,
+    marginHorizontal:10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   iconText: {
     fontSize:12,
     fontWeight:'600',
@@ -3545,11 +3676,11 @@ const styles = StyleSheet.create({
   },
   sydemenu: {
     position:'absolute',
-    top:30,
-    zIndex:1000,
-    width:'100%',
+    zIndex:900,
+    top:-10,
     flexDirection: 'row',
     justifyContent: 'center',
+    alignSelf:'center',
   },
   menucircle: {
     width:65,
@@ -3560,7 +3691,7 @@ const styles = StyleSheet.create({
     borderRadius:100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal:10,
+    marginLeft:20,
   },
   cus_label: {
     color: '#7d7d7d',
@@ -3573,8 +3704,7 @@ const styles = StyleSheet.create({
   },
   overlap_btnwrap: {
     alignSelf: 'center',
-    position: 'absolute',
-    bottom: 15
+    marginBottom:20
   },
   overlap3: {
     borderWidth:1,

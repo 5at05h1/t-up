@@ -67,7 +67,8 @@
     "react-native-version-check": "^3.4.7",
     "react-native-version-check-expo": "^3.4.7",
     "react-native-web": "~0.19.6",
-    "react-native-webview": "13.2.2"
+    "react-native-webview": "13.2.2",
+    "expo-clipboard": "~4.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

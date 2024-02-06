@@ -9,6 +9,72 @@ exports.CreateDB = function(props){
 
     module.exports.db.transaction((tx) => {
     
+      // コミュニケーションテーブルに送信元、宛先があるかチェック
+      tx.executeSql(
+        `PRAGMA table_info('communication_mst');`,
+        [],
+        (_, { rows }) => {
+
+          var communication_mst = rows._array;
+
+          if (communication_mst.length == 0) return;
+
+          var receive_mail = false;
+          var send_mail    = false;
+          
+          for (var cm=0;cm<communication_mst.length;cm++) {
+            if (communication_mst[cm]["name"] == "receive_mail") {
+              receive_mail = true;
+            }
+            if (communication_mst[cm]["name"] == "send_mail") {
+              send_mail = true;
+            }
+          }
+
+          if (!receive_mail || !send_mail) {
+            // 一旦削除
+            tx.executeSql(
+              `drop table communication_mst;`,
+              [],
+              () => {
+                // コミュニケーションテーブル追加
+                tx.executeSql(
+                  `CREATE TABLE "communication_mst" (
+                    "communication_id" TEXT UNIQUE,
+                    "customer_id" TEXT,
+                    "speaker" TEXT,
+                    "time" TEXT,
+                    "title" TEXT,
+                    "note" TEXT,
+                    "line_note" TEXT,
+                    "file_path" TEXT,
+                    "status" TEXT,
+                    "html_flg" TEXT,
+                    "receive_mail" TEXT,
+                    "send_mail" TEXT,
+                    PRIMARY KEY("communication_id")
+                  );`,
+                  [],
+                );
+                // コミュニケーションインデックス作成
+                tx.executeSql(
+                  `CREATE INDEX "index_communication_mst" ON "communication_mst" (
+                    "customer_id",
+                    "time",
+                    "status"
+                  );`,
+                  [],
+                );
+              }
+            );
+          }
+
+        },
+        () => {
+          console.log("コミュニケーションテーブル　再作成失敗");
+        }
+      );
+
       // 定型文テーブルがプライマリキー設定されているか確認する
       tx.executeSql(
         `PRAGMA table_info('fixed_mst');`,
@@ -20,14 +86,18 @@ exports.CreateDB = function(props){
           if (fixed_mst.length == 0) return;
 
           var pk = false;
+          var html = false;
           
           for (var f=0;f<fixed_mst.length;f++) {
             if (fixed_mst[f]["name"] == "fixed_id") {
               if(fixed_mst[f]["pk"] == "1") pk = true;
             }
+            if (fixed_mst[f]["name"] == "html_flg") {
+              html = true;
+            }
           }
 
-          if (!pk) {
+          if (!pk || !html) {
             // 一旦削除
             tx.executeSql(
               `drop table fixed_mst;`,
@@ -41,6 +111,7 @@ exports.CreateDB = function(props){
                     "title"	TEXT,
                     "mail_title"	TEXT,
                     "note"	TEXT,
+                    "html_flg"	TEXT,
                     PRIMARY KEY("fixed_id")
                   );`,
                   [],
@@ -314,6 +385,8 @@ exports.CreateDB = function(props){
               "file_path" TEXT,
               "status" TEXT,
               "html_flg" TEXT,
+              "receive_mail" TEXT,
+              "send_mail" TEXT,
               PRIMARY KEY("communication_id")
             );`,
             [],
@@ -341,6 +414,7 @@ exports.CreateDB = function(props){
               "title"	TEXT,
               "mail_title"	TEXT,
               "note"	TEXT,
+              "html_flg"	TEXT,
               PRIMARY KEY("fixed_id")
             );`,
             [],

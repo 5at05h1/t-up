@@ -136,6 +136,29 @@ export default function Schedule(props) {
 
     });
 
+    // 通知をタップしたらお客様一覧 → トーク画面 (ログイン済)
+    const notificationInteractionSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+      if (response.notification.request.content.data.customer && global.sp_id) {
+        const cus_data = response.notification.request.content.data.customer;
+        
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'TalkScreen' ,
+            params: route.params ,
+            customer:cus_data.customer_id,
+            websocket:route.websocket,
+            cus_name:cus_data.name,
+          }],
+        });
+        
+      }
+    })
+    
+    return () => {
+      notificationInteractionSubscription.remove();
+    };
+
   },[]);
 
     
