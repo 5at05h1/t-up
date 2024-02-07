@@ -348,7 +348,7 @@ export default function Setting(props) {
     if(global.sp_token && global.sp_id){
       
       // サーバーに情報送信して、DBから削除
-      await fetch(domain+'app/app_system/set_staff_app_token.php', {
+      await fetch(domain+'batch_app/set_staff_app_token_tup.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

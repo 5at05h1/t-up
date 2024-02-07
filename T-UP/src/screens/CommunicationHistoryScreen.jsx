@@ -10,7 +10,7 @@ import SideMenu from 'react-native-side-menu-updated';
 import * as SQLite from "expo-sqlite";
 import Storage from 'react-native-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+// import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 import Loading from '../components/Loading';
 import { GetDB,db_select,db_write } from '../components/Databace';
@@ -27,15 +27,15 @@ const db = SQLite.openDatabase("db");
 // let domain = 'http://test.t-up.systems/';
 let domain = 'https://www.t-up.systems/';
 
-// 本番
-const adUnitId = Platform.OS === 'ios'
-  ? 'ca-app-pub-1369937549147272/4539839609'  // ios
-  : 'ca-app-pub-1369937549147272/1575561075'; // android
-
-// テスト
+// // 本番
 // const adUnitId = Platform.OS === 'ios'
-//   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
-//   : 'ca-app-pub-3940256099942544/6300978111'; // android
+//   ? 'ca-app-pub-1369937549147272/4539839609'  // ios
+//   : 'ca-app-pub-1369937549147272/1575561075'; // android
+
+// // テスト
+// // const adUnitId = Platform.OS === 'ios'
+// //   ? 'ca-app-pub-3940256099942544/2934735716'  // ios
+// //   : 'ca-app-pub-3940256099942544/6300978111'; // android
 
 Notifications.setBadgeCountAsync(0);
 
@@ -833,7 +833,7 @@ export default function CommunicationHistoryScreen(props) {
     if(global.sp_token && global.sp_id){
       
       // サーバーに情報送信して、DBから削除
-      await fetch(domain+'app/app_system/set_staff_app_token.php', {
+      await fetch(domain+'batch_app/set_staff_app_token_tup.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1006,7 +1006,7 @@ export default function CommunicationHistoryScreen(props) {
                     <Text style={styles.message} numberOfLines={1}>{note}</Text>
                   </View>
                 </TouchableOpacity>
-                {index==4&&(
+                {/* {index==4&&(
                   <BannerAd
                     unitId={adUnitId}
                     size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
@@ -1014,7 +1014,7 @@ export default function CommunicationHistoryScreen(props) {
                       requestNonPersonalizedAdsOnly: true,
                     }}
                   />
-                )}
+                )} */}
                 </>
               );
             }
