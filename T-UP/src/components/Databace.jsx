@@ -9,6 +9,83 @@ exports.CreateDB = function(props){
 
     module.exports.db.transaction((tx) => {
     
+      // データリンクテーブルがあるか確認
+      tx.executeSql(
+        `PRAGMA table_info('data_link_mst');`,
+        [],
+        (_, { rows }) => {
+          var link_mst = rows._array;
+          if (link_mst.length == 0) {
+            // データリンクテーブル追加
+            tx.executeSql(
+              `CREATE TABLE "data_link_mst" (
+                "seq"	TEXT,
+                "shop_id"	TEXT,
+                "name"	TEXT,
+                "url"	TEXT,
+                "ins_dt"	TEXT,
+                PRIMARY KEY ("seq")
+              );`,
+              [],
+              () => {console.log("データリンクテーブル追加");},
+              () => {console.log("データリンクテーブル追加失敗");}
+            );
+            // データリンクインデックス作成
+            tx.executeSql(
+              `CREATE INDEX "index_data_link_mst" ON "data_link_mst" (
+                "shop_id",
+                "seq"
+              );`,
+              [],
+              () => {console.log("データリンクインデックス作成");},
+              () => {console.log("データリンクインデックス作成失敗");}
+            );
+          }
+        },
+        () => {
+          console.log("データリンクテーブル作成失敗");
+        }
+      );
+
+      // メールリンクテーブルがあるか確認
+      tx.executeSql(
+        `PRAGMA table_info('link_mst');`,
+        [],
+        (_, { rows }) => {
+          var link_mst = rows._array;
+          if (link_mst.length == 0) {
+            // メールリンクテーブル追加
+            tx.executeSql(
+              `CREATE TABLE "link_mst" (
+                "shop_id"	TEXT,
+                "seq"	TEXT,
+                "name"	TEXT,
+                "url"	TEXT,
+                "expiration_date"	TEXT,
+                "del_flg"	TEXT,
+                PRIMARY KEY ("shop_id","seq")
+              );`,
+              [],
+              () => {console.log("メールリンクテーブル追加");},
+              () => {console.log("メールリンクテーブル追加失敗");}
+            );
+            // メールリンクインデックス作成
+            tx.executeSql(
+              `CREATE INDEX "index_link_mst" ON "link_mst" (
+                "shop_id",
+                "seq"
+              );`,
+              [],
+              () => {console.log("メールリンクインデックス作成");},
+              () => {console.log("メールリンクインデックス作成失敗");}
+            );
+          }
+        },
+        () => {
+          console.log("メールリンクテーブル作成失敗");
+        }
+      );
+
       // コミュニケーションテーブルに送信元、宛先があるかチェック
       tx.executeSql(
         `PRAGMA table_info('communication_mst');`,
@@ -453,6 +530,57 @@ exports.CreateDB = function(props){
             () => {console.log("住所テーブル追加失敗");}
           );
           
+          // メールリンクテーブル追加
+          tx.executeSql(
+            `CREATE TABLE "link_mst" (
+              "shop_id"	TEXT,
+              "seq"	TEXT,
+              "name"	TEXT,
+              "url"	TEXT,
+              "expiration_date"	TEXT,
+              "del_flg"	TEXT,
+              PRIMARY KEY ("shop_id","seq")
+            );`,
+            [],
+            () => {console.log("メールリンクテーブル追加");},
+            () => {console.log("メールリンクテーブル追加失敗");}
+          );
+          // メールリンクインデックス作成
+          tx.executeSql(
+            `CREATE INDEX "index_link_mst" ON "link_mst" (
+              "shop_id",
+              "seq"
+            );`,
+            [],
+            () => {console.log("メールリンクインデックス作成");},
+            () => {console.log("メールリンクインデックス作成失敗");}
+          );
+
+          // データリンクテーブル追加
+          tx.executeSql(
+            `CREATE TABLE "data_link_mst" (
+              "seq"	TEXT,
+              "shop_id"	TEXT,
+              "name"	TEXT,
+              "url"	TEXT,
+              "ins_dt"	TEXT,
+              PRIMARY KEY ("seq")
+            );`,
+            [],
+            () => {console.log("データリンクテーブル追加");},
+            () => {console.log("データリンクテーブル追加失敗");}
+          );
+          // データリンクインデックス作成
+          tx.executeSql(
+            `CREATE INDEX "index_data_link_mst" ON "data_link_mst" (
+              "shop_id",
+              "seq"
+            );`,
+            [],
+            () => {console.log("データリンクインデックス作成");},
+            () => {console.log("データリンクインデックス作成失敗");}
+          );
+
           resolve();
         }
       );

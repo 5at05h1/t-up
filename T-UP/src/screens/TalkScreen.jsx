@@ -11,7 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import GestureRecognizer from 'react-native-swipe-gestures';
 
 import Loading from '../components/Loading';
-import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6} from '../components/Modal';
+import {MyModal0,MyModal1,MyModal2,MyModal3,MyModal4,MyModal5,MyModal6,MyModal9} from '../components/Modal';
 
 import { GetDB,db_select,db_write } from '../components/Databace';
 
@@ -47,6 +47,10 @@ export default function TalkScreen(props) {
   const [modal4, setModal4] = useState(false);
   const [modal5, setModal5] = useState(false);
   const [modal6, setModal6] = useState(false);
+  const [modal9, setModal9] = useState(false);
+
+  // 0:メールリンク 1:データリンク
+  const [link_flg, setLink_flg] = useState(0);
   
   const [reservation,setReservation] = useState([]);
   const [mail, setMail] = useState([]);
@@ -69,6 +73,8 @@ export default function TalkScreen(props) {
   const [station,setStation] = useState([]);
   const [address,setAddress] = useState([]);
   const [fixed, setFixed] = useState([]);
+  const [link, setLink] = useState([]);
+  const [data_link, setData_link] = useState([]);
   
   const [inputCursorPosition, setInputCursorPosition] = useState(null);
   
@@ -211,6 +217,8 @@ export default function TalkScreen(props) {
     GetDB('station_mst').then(station_mst=>station_mst!=false&&setStation(station_mst));
     GetDB('address_mst').then(address_mst=>address_mst!=false&&setAddress(address_mst));
     GetDB('fixed_mst').then(fixed_mst=>fixed_mst!=false&&setFixed(fixed_mst));
+    GetDB('link_mst').then(link_mst=>link_mst!=false&&setLink(link_mst));
+    GetDB('data_link_mst').then(data_link_mst=>data_link_mst!=false&&setData_link(data_link_mst));
 
   }, [])
   
@@ -1073,6 +1081,12 @@ export default function TalkScreen(props) {
       setModal3(true);
     } else if (name === 5) {
       setModal4(true);
+    } else if (name === 6) {
+      setModal9(true);
+      setLink_flg(0);
+    } else if (name === 7) {
+      setModal9(true);
+      setLink_flg(1);
     }
   }
   
@@ -1393,6 +1407,8 @@ export default function TalkScreen(props) {
                 ''}
               options={video_option}
               options2={options}
+              link={link}
+              data_link={data_link}
             />
             <MyModal2
               isVisible={modal2}
@@ -1416,6 +1432,14 @@ export default function TalkScreen(props) {
             <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(5)}>
               <Feather name='file-text' color='#1f2d53' size={28} />
               <Text style={styles.iconText}>定型文</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(6)}>
+              <Feather name='link' color='#1f2d53' size={28} />
+              <Text style={styles.iconText}>メールリンク</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuBox}onPress={()=>menuPress(7)}>
+              <Feather name='file' color='#1f2d53' size={28} />
+              <Text style={styles.iconText}>データリンク</Text>
             </TouchableOpacity>
             
             <MyModal3 {...props} 
@@ -1452,6 +1476,18 @@ export default function TalkScreen(props) {
                 customer.reverberation.article_url,
                 chatbot
               ]:[]}
+            />
+            <MyModal9
+              isVisible={modal9}
+              onSwipeComplete={() => { setModal9(false) }}
+              onPress={()=>{ setModal9(false) }}
+              flg={link_flg}
+              data={link_flg==0?link:data_link}
+              msgtext={msgtext}
+              setMsgtext={setMsgtext}
+              inputCursorPosition={inputCursorPosition}
+              customer_id={route.customer}
+              shop_id={route.params.shop_id}
             />
           </View>
         </View>

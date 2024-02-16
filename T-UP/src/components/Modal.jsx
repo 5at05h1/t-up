@@ -71,8 +71,8 @@ export function MyModal0(props){
 }
 
 export function MyModal1(props){
-  
-  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2,send_mail } = props;
+
+  const { route,isVisible,onSwipeComplete,reservation,shop_mail,cus_mail,subject,note_ret,onSend,property,station_list,address,c_d,fixed,hensu,mail_online,mail_set,options,options2,send_mail,link,data_link } = props;
   
   const [res,setRes] = useState(props.reservation);
   const editorRef = useRef();
@@ -330,6 +330,11 @@ export function MyModal1(props){
     setProperty(!Property);
   };
   
+  // 0:メールリンク 1:データリンク
+  const [link_flg, setLink_flg] = useState(0);
+
+  const [Link, setLink] = useState(false);
+
   // 定型文
   const [Fixed, setFixed] = useState(false);
 
@@ -903,35 +908,61 @@ export function MyModal1(props){
         mail_format={mail_format}
         editorRef={editorRef}
       />
+      <MyModal9
+        isVisible={Link}
+        onSwipeComplete={() => { setLink(false) }}
+        onPress={()=>{ setLink(false) }}
+        flg={link_flg}
+        data={link_flg==0?link:data_link}
+        msgtext={note}
+        setMsgtext={setNote}
+        inputCursorPosition={inputCursorPosition}
+        customer_id={route.customer}
+        shop_id={route.params.shop_id}
+        mail_format={mail_format}
+        editorRef={editorRef}
+      />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={styles.sydemenu}>
-          <TouchableOpacity
-            style={[styles.menucircle,{marginLeft:0}]}
-            onPress={openProperty}
-          >
-            <Feather name='home' color='#1f2d53' size={28} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.menucircle}
-            onPress={openFixed}
-          >
-            <Feather name='file-text' color='#1f2d53' size={28} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={option?styles.menucircle:{display:"none"}}
-            onPress={() => {openOnline_call(route.customer)}}
-          >
-            <Feather name='video' color='#1f2d53' size={28} />
-          </TouchableOpacity>
-        </View>
         <View style={[{height:"90%",marginTop:20},styles.modalInner]}>
-          <TouchableOpacity
-            style={styles.close}
-            onPress={onClose}
-          >
-            <Feather name='x-circle' color='gray' size={35} />
-          </TouchableOpacity>
-          <View style={[styles.form,{height:'100%',paddingTop:50,paddingBottom:20}]}>
+          <View style={[styles.form,{height:'100%',paddingTop:20,paddingBottom:20}]}>
+            <View style={styles.sydemenu}>
+              <TouchableOpacity
+                style={[styles.menucircle,{marginLeft:0}]}
+                onPress={openProperty}
+              >
+                <Feather name='home' color='#1f2d53' size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menucircle}
+                onPress={openFixed}
+              >
+                <Feather name='file-text' color='#1f2d53' size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menucircle}
+                onPress={()=>{
+                  setLink_flg(0);
+                  setLink(!Link);
+                }}
+              >
+                <Feather name='link' color='#1f2d53' size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menucircle}
+                onPress={()=>{
+                  setLink_flg(1);
+                  setLink(!Link);
+                }}
+              >
+                <Feather name='file' color='#1f2d53' size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={option?styles.menucircle:{display:"none"}}
+                onPress={() => {openOnline_call(route.customer)}}
+              >
+                <Feather name='video' color='#1f2d53' size={24} />
+              </TouchableOpacity>
+            </View>
             <TouchableWithoutFeedback
               disabled={disabled}
               onPress={keyboardClose}
@@ -2672,9 +2703,17 @@ export function MyModal5(props){
               {name}
             </Text>
             <Text style={styles.cus_label}>【電話番号】</Text>
-            <Text style={styles.cus_contents}>
-              {tel}
-            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                const phoneNumber = `tel:${tel}`;
+                Linking.openURL(phoneNumber);
+              }}
+              disabled={tel==""?true:false}
+            >
+              <Text style={[styles.cus_contents,{color:"blue",textDecorationLine: 'underline'}]}>
+                {tel}
+              </Text>
+            </TouchableOpacity>
             <Text style={suumo?[styles.cus_contents,{color:'red'}]:{display:'none'}}>
               ※こちらは有効期限付きの番号です。{"\n"}お客様の電話番号のご確認をお願いします
             </Text>
@@ -3425,6 +3464,126 @@ export function MyModal8(props){
   );
 }
 
+export function MyModal9(props){
+  
+  const { isVisible,onSwipeComplete,onPress,flg,data,msgtext,setMsgtext,inputCursorPosition,customer_id,shop_id,mail_format,editorRef } = props;
+  
+  const [insertMsg,setInsertMsg] = useState(false);
+  
+  useEffect(() => {
+    if (insertMsg) {
+      if(setMsgtext) {
+        setMsgtext(insertMsg);
+        if (mail_format == '1' && insertMsg && editorRef) {
+          editorRef.current.setContentHTML(insertMsg);
+        }
+      }
+    }
+  },[insertMsg])
+
+  // HTML形式に変換
+  function convertToHTML(text) {
+    let urlPattern = /(^|\s|<.+?>)(https?:\/\/[^\s<>]+)($|\s|<.+?>)/g;
+    let extractedText;
+
+    if (/(<\/?[^>]+(>|$)|&nbsp;)/gi.test(text)) {
+      // 既にHTMLソースの場合
+      extractedText = text.split('”').join('"');
+    } else {
+      // 普通の文字列の場合
+      extractedText = text.replace(/\n/g, '<br />\n');
+    }
+
+    extractedText = extractedText.replace(urlPattern, function(match, p1, p2, p3) {
+      if (p1.startsWith("<a") || p1.startsWith("<img") || p1.startsWith("<area")) {
+        // URLの文字列がa,img,areaのどれかのタグで挟まれていたら、そのままのソースを返す
+        return match;
+      } else {
+        // URLの文字列がその他のHTMLタグかスペースに挟まれていたら、aタグで挟む
+        return p1 + "<a href='" + p2 + "'>" + p2 + "</a>" + p3;
+      }
+    });
+
+    return extractedText;
+  }
+  
+  // 書き換え
+  function setLink(link){
+
+    var proMsg = "";
+    
+    if (flg ==0) {
+      var msg = "\n"+domain+"link/"+customer_id+"/"+shop_id+"/"+link.seq+"/";
+    } else {
+      var msg = "\n"+domain+"data_link/"+customer_id+"/"+shop_id+"/"+link.seq+"/";
+    }
+
+    if (mail_format == '1') {
+
+      // HTMLエディタのカーソル位置に挿入
+      msg = convertToHTML(msg);
+      
+      if (inputCursorPosition != null) {
+        var index = msgtext.indexOf(inputCursorPosition);
+        if (index != -1) {
+          msg = '\n' + '<div>' + msg + '</div>';
+          proMsg = msgtext.slice(0, index + inputCursorPosition.length) + msg + msgtext.slice(index + inputCursorPosition.length);
+        } else {
+          proMsg = msgtext + msg;
+        }
+      } else {
+        proMsg = msg + msgtext;
+      }
+    } else {
+      // TextInputのカーソル位置に挿入
+      if (inputCursorPosition != null) {
+        proMsg = msgtext.slice(0, inputCursorPosition.start) + msg + msgtext.slice(inputCursorPosition.end);
+      } else {
+        proMsg = msgtext + msg;
+      }
+    }
+    
+    setInsertMsg(msgtext?proMsg:msg);
+    
+    onPress();
+  }
+  
+  return (
+    <Modal
+      isVisible={isVisible}
+      swipeDirection={['up']}
+      onSwipeComplete={onSwipeComplete}
+      backdropOpacity={0.5}
+      animationInTiming={300}
+      animationOutTiming={500}
+      animationIn={'slideInDown'}
+      animationOut={'slideOutUp'}
+      propagateSwipe={true}
+      onBackdropPress={onPress}
+    >
+      <View  style={[{height:300},styles.template]}>
+        <TouchableOpacity
+          style={styles.close}
+          onPress={onPress}
+        >
+          <Feather name='x-circle' color='gray' size={35} />
+        </TouchableOpacity>
+        <Text style={styles.linkTitle}>{flg==0?"メールリンクを挿入":"データリンクを挿入"}</Text>
+        <FlatList 
+          data={data}
+          renderItem={({ item }) => 
+            (
+              <TouchableOpacity onPress={() => setLink(item)}>
+                <Text style={styles.CollapseBodyText}>　⇒ {item.name}</Text>
+              </TouchableOpacity>
+            )
+          }
+        />
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   modalInner: {
     justifyContent: 'center',
@@ -3675,23 +3834,21 @@ const styles = StyleSheet.create({
     textAlign:'center',
   },
   sydemenu: {
-    position:'absolute',
-    zIndex:900,
-    top:-10,
     flexDirection: 'row',
     justifyContent: 'center',
     alignSelf:'center',
+    marginBottom:10
   },
   menucircle: {
-    width:65,
-    height:65,
+    width:55,
+    height:55,
     backgroundColor:'#edf2ff',
     borderWidth:3,
     borderColor:'#1f2d53',
     borderRadius:100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft:20,
+    marginLeft:10,
   },
   cus_label: {
     color: '#7d7d7d',
@@ -3733,4 +3890,10 @@ const styles = StyleSheet.create({
     borderColor: '#1f2d53',
     borderWidth: 1,
   },
+  linkTitle: {
+    color:'#666',
+    fontSize:16,
+    fontWeight:'700',
+    marginBottom:20
+  }
 })

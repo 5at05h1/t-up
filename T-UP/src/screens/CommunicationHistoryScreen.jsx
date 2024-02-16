@@ -227,8 +227,6 @@ export default function CommunicationHistoryScreen(props) {
     
     await searchCustomer(staff_,true);
 
-    await Insert_fixed_db("");
-
     var sql = `select count(*) as count from customer_mst;`;
     var customer = await db_select(sql);
     const cnt2 = customer[0]["count"];
@@ -329,7 +327,9 @@ export default function CommunicationHistoryScreen(props) {
       });
 
       await Insert_fixed_db(fixed_mst);
-
+      await Insert_link_db(json.maillink);
+      await Insert_data_link_db(json.datalink);
+      
       function addZero(num, length) {
         var minus = "";
         var zero = ('0'.repeat(length)).slice(-length);
@@ -681,7 +681,7 @@ export default function CommunicationHistoryScreen(props) {
       // ローカルDBの定型文情報
       var DBfix = [];
       if (fixed_mst != false) {
-        DBstf = fixed_mst.map((f) => {
+        DBfix = fixed_mst.map((f) => {
           return f.fixed_id
         })
       }
@@ -709,6 +709,82 @@ export default function CommunicationHistoryScreen(props) {
 
   }
   
+  // メールリンク登録
+  async function Insert_link_db(link) {
+
+    if (link.length > 0) {
+
+      const link_mst = await GetDB('link_mst');
+
+      // ローカルDBの定型文情報
+      var DBlink = [];
+      if (link_mst != false) {
+        DBlink = link_mst.map((l) => {
+          return l.seq
+        })
+      }
+
+      // 最新の定型文情報
+      var APIlink = [];
+
+      for (var l=0;l<link.length;l++) {
+        var link_ = link[l];
+        var link_insert = `insert or replace into link_mst values (?,?,?,?,?,?);`;
+        var link_data = [link_.shop_id,link_.seq,link_.name,link_.url,link_.expiration_date,link_.del_flg];
+        await db_write(link_insert,link_data);
+        APIlink.push(link_.seq);
+      }
+
+      // 削除する定型文情報
+      const DELLink = DBlink.filter(link => !APIlink.includes(link));
+      
+      for (var d=0;d<DELLink.length;d++) {
+        var link_id = DELLink[d];
+        var link_delete = `delete from link_mst where ( seq = ? );`;
+        await db_write(link_delete,[link_id]);
+      }
+    }
+
+  }
+
+  // データリンク登録
+  async function Insert_data_link_db(data_link) {
+
+    if (data_link.length > 0) {
+
+      const data_link_mst = await GetDB('data_link_mst');
+
+      // ローカルDBの定型文情報
+      var DBdata_link = [];
+      if (data_link_mst != false) {
+        DBdata_link = data_link_mst.map((l) => {
+          return l.seq
+        })
+      }
+
+      // 最新の定型文情報
+      var APIdata_link = [];
+
+      for (var l=0;l<data_link.length;l++) {
+        var data_link_ = data_link[l];
+        var data_link_insert = `insert or replace into data_link_mst values (?,?,?,?,?);`;
+        var data_link_data = [data_link_.seq,data_link_.shop_id,data_link_.name,data_link_.url,data_link_.ins_dt];
+        await db_write(data_link_insert,data_link_data);
+        APIdata_link.push(data_link_.seq);
+      }
+
+      // 削除する定型文情報
+      const DELdata_link = DBdata_link.filter(link => !APIdata_link.includes(link));
+      
+      for (var d=0;d<DELdata_link.length;d++) {
+        var data_link_id = DELdata_link[d];
+        var data_link_delete = `delete from data_link_mst where ( seq = ? );`;
+        await db_write(data_link_delete,[data_link_id]);
+      }
+    }
+
+  }
+
   async function onSubmit() {
 
     Keyboard.dismiss();
