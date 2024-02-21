@@ -1062,6 +1062,7 @@ export function MyModal1(props){
                         disableFullscreenUI={true}
                         numberOfLines={11}
                         onSelectionChange={(event) => {setInputCursorPosition(event.nativeEvent.selection);}}
+                        scrollEnabled={false}
                       />
                     </>
                   ) : (
@@ -3021,12 +3022,35 @@ export function MyModal6(props){
     
     if (overlap) {
       if (num == '1') {
+        
+        var tel = "";
+  
+        if (overlap.main.tel1) {
+          tel = overlap.main.tel1;
+        } else if (overlap.main.tel2) {
+          tel = overlap.main.tel2;
+        } else if (overlap.main.tel3) {
+          tel = overlap.main.tel1;
+        }
+
         return (
           <ScrollView style={overlap.group?{height:240}:{height:280}}>
             <Text style={styles.cus_label}>【氏名】</Text>
             <Text style={styles.cus_contents}>
               {overlap.main.name}
             </Text>
+            <Text style={styles.cus_label}>【TEL】</Text>
+            <TouchableOpacity
+              onPress={() => {
+                const phoneNumber = `tel:${tel}`;
+                Linking.openURL(phoneNumber);
+              }}
+              disabled={tel==""?true:false}
+            >
+              <Text style={[styles.cus_contents,{color:"blue",textDecorationLine: 'underline'}]}>
+                {tel}
+              </Text>
+            </TouchableOpacity>
             <Text style={styles.cus_label}>【件名】</Text>
             <Text style={styles.cus_contents}>
               {overlap.main.title}
@@ -3090,6 +3114,17 @@ export function MyModal6(props){
             style={overlap.group?{height:200}:{height:240}}
             data={overlap.list}
             renderItem={({ item }) => {
+
+              var tel = "";
+        
+              if (overlap.main.tel1) {
+                tel = overlap.main.tel1;
+              } else if (overlap.main.tel2) {
+                tel = overlap.main.tel2;
+              } else if (overlap.main.tel3) {
+                tel = overlap.main.tel1;
+              }
+
               return (
                 <View style={styles.overlap3}>
                   <Text>【氏名】
@@ -3097,6 +3132,19 @@ export function MyModal6(props){
                       ?item.name
                       :item.name.substring(0, 15)+'...'
                     ):''}
+                  </Text>
+                  <Text>【TEL】
+                    <TouchableOpacity
+                      onPress={() => {
+                        const phoneNumber = `tel:${tel}`;
+                        Linking.openURL(phoneNumber);
+                      }}
+                      disabled={tel==""?true:false}
+                    >
+                      <Text style={{color:"blue",textDecorationLine: 'underline'}}>
+                        {tel}
+                      </Text>
+                    </TouchableOpacity>
                   </Text>
                   <Text>【件名】
                     {item.title?(item.title.length < 15
