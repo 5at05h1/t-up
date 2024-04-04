@@ -2,7 +2,7 @@
   "expo": {
     "name": "t-upApp",
     "slug": "t-upApp",
-    "version": "2.3.5",
+    "version": "2.3.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -24,7 +24,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.TUP-CRM",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2.3.5",
+      "buildNumber": "2.3.6",
       "infoPlist": {
         "UIRequiresFullScreen": "YES",
         "CFBundleDevelopmentRegion": "ja_JP",
@@ -39,7 +39,7 @@
       },
       "package": "com.TUP_CRM",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 24,
+      "versionCode": 25,
       "permissions": [
         "READ_CONTACTS",
         "READ_EXTERNAL_STORAGE",

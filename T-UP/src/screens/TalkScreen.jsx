@@ -1230,6 +1230,7 @@ export default function TalkScreen(props) {
       placeholder={customer.line?"テキストを入力してください":""}
       disableComposer={!customer.line?true:false}
       onSend={() => onSend(['LINE送信',msgtext],'line')}
+      dateFormat={'MM/DD(ddd)'}
       renderMessage={(props) => {
         return (
           <GestureRecognizer

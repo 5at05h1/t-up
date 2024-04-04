@@ -241,6 +241,30 @@ index 7bbf561..ef8d4ee 100644
  };
  //# sourceMappingURL=Composer.js.map
 \ No newline at end of file
+diff --git a/node_modules/react-native-gifted-chat/lib/Day.js b/node_modules/react-native-gifted-chat/lib/Day.js
+index 476b290..e3a3508 100644
+--- a/node_modules/react-native-gifted-chat/lib/Day.js
++++ b/node_modules/react-native-gifted-chat/lib/Day.js
+@@ -1,7 +1,8 @@
+ import * as React from 'react';
+ import PropTypes from 'prop-types';
+ import { StyleSheet, Text, View, } from 'react-native';
+-import dayjs from 'dayjs';
++import Moment from 'moment';
++import 'moment/locale/ja'
+ import Color from './Color';
+ import { StylePropType, isSameDay } from './utils';
+ import { DATE_FORMAT } from './Constant';
+@@ -28,8 +29,7 @@ export function Day({ dateFormat = DATE_FORMAT, currentMessage, previousMessage,
+     return (<View style={[styles.container, containerStyle]}>
+       <View style={wrapperStyle}>
+         <Text style={[styles.text, textStyle]}>
+-          {dayjs(currentMessage.createdAt)
+-            .locale(getLocale())
++          {Moment(currentMessage.createdAt)
+             .format(dateFormat)}
+         </Text>
+       </View>
 diff --git a/node_modules/react-native-gifted-chat/lib/InputToolbar.js b/node_modules/react-native-gifted-chat/lib/InputToolbar.js
 index 2ff651d..c6ae2db 100644
 --- a/node_modules/react-native-gifted-chat/lib/InputToolbar.js
